@@ -31,7 +31,6 @@ def iter_order_book(file_name: Path, levels: int) -> Iterator[OrderBook]:
                     )
                     for level in range(0, levels*4, 4)
                 ],
-                levels
             )
 
 

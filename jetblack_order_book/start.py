@@ -30,7 +30,7 @@ def process(messages_path: Path, order_book_path: Path, levels: int) -> None:
             print(message)
 
             next_order_book = next_order_book.process(message)
-            print(format(next_order_book, "all"))
+            print(format(next_order_book, str(levels)))
             print(next_order_book)
 
             count += 1

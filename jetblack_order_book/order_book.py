@@ -15,12 +15,10 @@ class OrderBook:
     def __init__(
             self,
             buys: List[AggregateOrder],
-            sells: List[AggregateOrder],
-            levels: int
+            sells: List[AggregateOrder]
     ) -> None:
-        self._buys = buys
-        self._sells = sells
-        self.levels = levels
+        self.buys = buys
+        self.sells = sells
 
         self._handlers = {
             EventType.SUBMIT: self._handle_submit,
@@ -32,51 +30,30 @@ class OrderBook:
             EventType.HALT: self._handle_halt,
         }
 
-    @property
-    def buys(self) -> List[AggregateOrder]:
-        return self._buys[-self.levels:]
-
-    @property
-    def sells(self) -> List[AggregateOrder]:
-        return self._sells[:self.levels]
-
     def __repr__(self) -> str:
-        return f"OrderBook({self._buys}, {self._sells})"
+        return f"OrderBook({self.buys}, {self.sells})"
 
     def __str__(self) -> str:
-        return format(self, "levels")
+        return format(self, "")
 
     def __format__(self, format_spec: str) -> str:
-        buys, sells = (
-            (self._buys, self._sells) if format_spec == 'all'
-            else (self.buys, self.sells)
-        )
+        levels = None if not format_spec else int(format_spec)
+        # pylint: disable=invalid-unary-operand-type
+        buys = self.buys if levels is None else self.buys[-levels:]
+        sells = self.sells if levels is None else self.sells[:levels]
         return f'{",".join(map(str, buys))} : {",".join(map(str, sells))}'
 
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            all(
-                a == b
-                for a, b in zip(
-                    self._buys[-self.levels:],
-                    other._buys[-self.levels:]
-                )
-            ) and
-            all(
-                a == b
-                for a, b in zip(
-                    self._sells[:self.levels],
-                    other._sells[:self.levels]
-                )
-            )
+            all(a == b for a, b in zip(self.buys, other.buys)) and
+            all(a == b for a, b in zip(self.sells, other.sells))
         )
 
     def copy(self) -> OrderBook:
         return OrderBook(
-            [order.copy() for order in self._buys],
-            [order.copy() for order in self._sells],
-            self.levels
+            [order.copy() for order in self.buys],
+            [order.copy() for order in self.sells]
         )
 
     def process(self, message: Message) -> OrderBook:
@@ -87,8 +64,8 @@ class OrderBook:
 
         order_book = self.copy()
         aggregate_orders = (
-            order_book._buys if message.side == Side.BUY
-            else order_book._sells
+            order_book.buys if message.side == Side.BUY
+            else order_book.sells
         )
 
         index = index_of(
@@ -109,8 +86,8 @@ class OrderBook:
         # Cancellation (partial deletion of a limit order)
         order_book = self.copy()
         aggregate_orders = (
-            order_book._buys if message.side == Side.BUY
-            else order_book._sells
+            order_book.buys if message.side == Side.BUY
+            else order_book.sells
         )
 
         index = index_of(
@@ -132,8 +109,8 @@ class OrderBook:
         # Deletion (total deletion of a limit order)
         order_book = self.copy()
         aggregate_orders = (
-            order_book._buys if message.side == Side.BUY
-            else order_book._sells
+            order_book.buys if message.side == Side.BUY
+            else order_book.sells
         )
 
         index = index_of(
