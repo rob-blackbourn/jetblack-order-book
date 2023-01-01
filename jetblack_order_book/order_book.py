@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import csv
-from decimal import Decimal
-from pathlib import Path
-from typing import List, Iterator
+from typing import List
 
 from .aggregate_order import AggregateOrder
 from .messages import Message, Side, EventType
@@ -175,33 +172,3 @@ class OrderBook:
 
     def _handle_halt(self, message: Message) -> OrderBook:
         raise NotImplementedError("halt")
-
-
-def iter_order_book(file_name: Path, levels: int) -> Iterator[OrderBook]:
-    with open(file_name, newline='', encoding='ascii') as fp:
-        reader = csv.reader(fp)
-        for line in reader:
-            yield OrderBook(
-                list(reversed([
-                    AggregateOrder.create(
-                        Decimal(line[level+2]) / 10000,
-                        int(line[level+3]),
-                        -1
-                    )
-                    for level in range(0, levels*4, 4)
-                ])),
-                [
-                    AggregateOrder.create(
-                        Decimal(line[level+0]) / 10000,
-                        int(line[level+1]),
-                        -1
-                    )
-                    for level in range(0, levels*4, 4)
-                ],
-                levels
-            )
-
-
-def load_order_book(file_name: Path, levels: int):
-    for order_book in iter_order_book(file_name, levels):
-        print(order_book)

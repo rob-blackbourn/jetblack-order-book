@@ -1,10 +1,7 @@
 """Messages"""
 
-import csv
 from decimal import Decimal
 from enum import IntEnum
-from pathlib import Path
-from typing import Iterator
 
 
 class EventType(IntEnum):
