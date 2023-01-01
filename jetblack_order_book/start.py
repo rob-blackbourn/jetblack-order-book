@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
-from order_book.messages import iter_messages
-from order_book.orders import iter_order_book, OrderBook
+from jetblack_order_book.messages import iter_messages
+from jetblack_order_book.orders import iter_order_book, OrderBook
 
 
 def process(messages_path: Path, order_book_path: Path, levels: int) -> None:
@@ -15,16 +15,25 @@ def process(messages_path: Path, order_book_path: Path, levels: int) -> None:
     # Discard the first message
     next(message_feed)
 
+    count = 0
     while True:
         try:
             order_book = next(order_book_feed)
+            print(order_book)
 
-            if next_order_book and order_book != next_order_book:
+            if next_order_book is None:
+                next_order_book = order_book
+            elif order_book != next_order_book:
                 raise Exception("Match error")
 
             message = next(message_feed)
-            next_order_book = order_book.process(message)
+            print(message)
 
+            next_order_book = next_order_book.process(message)
+            print(format(next_order_book, "all"))
+            print(next_order_book)
+
+            count += 1
         except StopIteration:
             break
 
