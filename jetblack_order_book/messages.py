@@ -45,22 +45,3 @@ class Message:
 
     def __str__(self) -> str:
         return f"{self.event_type.name}[{self.order_id}]: {self.side.name} {self.price}x{self.size}"
-
-
-def iter_messages(file_name: Path) -> Iterator[Message]:
-    with open(file_name, newline='', encoding='ascii') as fp:
-        reader = csv.reader(fp)
-        for time, event_type, order_id, size, price, side in reader:
-            yield Message(
-                float(time),
-                EventType(int(event_type)),
-                int(order_id),
-                int(size),
-                Decimal(price) / 10000,
-                Side(int(side))
-            )
-
-
-def load_messages(file_name: Path):
-    for message in iter_messages(file_name):
-        print(message)

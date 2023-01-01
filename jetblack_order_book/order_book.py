@@ -7,92 +7,10 @@ from decimal import Decimal
 from pathlib import Path
 from typing import List, Iterator
 
+from .aggregate_order import AggregateOrder
 from .messages import Message, Side, EventType
 from .linq import index_of
-
-
-class Order:
-
-    def __init__(self, price: Decimal, size: int, order_id: int) -> None:
-        self.price = price
-        self.size = size
-        self.order_id = order_id
-
-    def __repr__(self) -> str:
-        return f"Order({self.price}, {self.size}, {self.order_id})"
-
-    def __str__(self) -> str:
-        return f"{self.price}x{self.size}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            self.price == other.price and
-            self.size == other.size
-        )
-
-    def copy(self) -> Order:
-        return Order(self.price, self.size, self.order_id)
-
-
-class AggregateOrder:
-
-    def __init__(self, orders: List[Order]) -> None:
-        assert len(orders) > 0, "must be at least one order"
-        self.price = orders[0].price
-        assert all(
-            self.price == order.price for order in orders[1:]
-        ), "all orders must be the same price"
-        self._orders = {
-            order.order_id: order
-            for order in orders
-        }
-
-    @classmethod
-    def create(cls, price: Decimal, size: int, order_id: int = -1) -> AggregateOrder:
-        return AggregateOrder([Order(price, size, order_id)])
-
-    @property
-    def size(self) -> int:
-        return sum(order.size for order in self._orders.values())
-
-    def __repr__(self) -> str:
-        return f"AggregateOrder({self._orders})"
-
-    def __str__(self) -> str:
-        return f"{self.price}x{self.size}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            self.price == other.price and
-            self.size == other.size
-        )
-
-    def __iadd__(self, rhs: Order) -> AggregateOrder:
-        assert isinstance(rhs, Order)
-        self._orders[rhs.order_id] = rhs
-        return self
-
-    def __len__(self) -> int:
-        return len(self._orders)
-
-    def __getitem__(self, order_id: int) -> Order:
-        return self._orders[order_id]
-
-    def __setitem__(self, order_id: int, order: Order) -> None:
-        self._orders[order_id] = order
-
-    def __delitem__(self, order_id: int) -> None:
-        del self._orders[order_id]
-
-    def __contains__(self, order_id: int) -> bool:
-        return order_id in self._orders
-
-    def copy(self) -> AggregateOrder:
-        return AggregateOrder(
-            [order.copy() for order in self._orders.values()]
-        )
+from .order import Order
 
 
 class OrderBook:
@@ -171,7 +89,10 @@ class OrderBook:
         order = Order(message.price, message.size, message.order_id)
 
         order_book = self.copy()
-        aggregate_orders = order_book._buys if message.side == Side.BUY else order_book._sells
+        aggregate_orders = (
+            order_book._buys if message.side == Side.BUY
+            else order_book._sells
+        )
 
         index = index_of(
             aggregate_orders,
@@ -190,7 +111,10 @@ class OrderBook:
     def _handle_cancel(self, message: Message) -> OrderBook:
         # Cancellation (partial deletion of a limit order)
         order_book = self.copy()
-        aggregate_orders = order_book._buys if message.side == Side.BUY else order_book._sells
+        aggregate_orders = (
+            order_book._buys if message.side == Side.BUY
+            else order_book._sells
+        )
 
         index = index_of(
             aggregate_orders,
@@ -210,7 +134,10 @@ class OrderBook:
     def _handle_delete(self, message: Message) -> OrderBook:
         # Deletion (total deletion of a limit order)
         order_book = self.copy()
-        aggregate_orders = order_book._buys if message.side == Side.BUY else order_book._sells
+        aggregate_orders = (
+            order_book._buys if message.side == Side.BUY
+            else order_book._sells
+        )
 
         index = index_of(
             aggregate_orders,
