@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import List
 
 from .aggregate_order import AggregateOrder
-from .messages import Message, Side, EventType
+from .messages import Message
 from .linq import index_of
 from .order import Order
+from .order_types import Side, EventType
 
 
 class OrderBook:
