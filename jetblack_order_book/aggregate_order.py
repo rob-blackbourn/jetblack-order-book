@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Optional
 
-from .linq import contains, first
+from .linq import contains, first, index_of
 from .limit_order import LimitOrder
 
 
@@ -56,5 +57,30 @@ class AggregateOrder:
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
 
+    def pop(self, index: Optional[int] = None) -> LimitOrder:
+        if index is not None:
+            return self._orders.pop(index)
+        else:
+            return self._orders.pop()
+
+    def insert(self, index: int, order: LimitOrder) -> None:
+        self._orders.insert(index, order)
+
     def find(self, order_id: int) -> LimitOrder:
         return first(self._orders, lambda x: x.order_id == order_id)
+
+    def change_size(self, order_id: int, size: int) -> LimitOrder:
+        index = index_of(self._orders, lambda x: x.order_id == order_id)
+        if index == -1:
+            raise KeyError("order not found")
+
+        self._orders[index] = order = self._orders[index].replace(size=size)
+
+        return order
+
+    def cancel(self, order_id: int) -> None:
+        index = index_of(self._orders, lambda x: x.order_id == order_id)
+        if index == -1:
+            raise KeyError("order not found")
+
+        del self._orders[index]

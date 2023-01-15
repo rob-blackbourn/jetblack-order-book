@@ -81,7 +81,7 @@ class OrderBook:
         ):
             best_bids, best_offers = self.bids[-1], self.offers[0]
             while best_bids and best_offers:
-                best_bid, best_offer = best_bids[0], best_offers[0]
+                best_bid, best_offer = best_bids.pop(0), best_offers.pop(0)
                 trade_size = min(best_bid.size, best_offer.size)
                 fills.append(
                     Fill(
@@ -90,12 +90,14 @@ class OrderBook:
                         best_bid.price,
                         trade_size)
                 )
-                best_bid.size -= trade_size
-                best_offer.size -= best_offer.size
-                if best_bid.size == 0:
-                    del best_bids[0]
-                if best_offers.size == 0:
-                    del best_offers[0]
+                best_bid = best_bid.replace(size=best_bid.size - trade_size)
+                best_offer = best_bid.replace(
+                    size=best_offer.size - trade_size
+                )
+                if best_bid.size != 0:
+                    best_bids.insert(0, best_bid)
+                if best_offer.size != 0:
+                    best_offers.insert(0, best_offer)
 
             if not best_bids:
                 del self.bids[-1]
@@ -122,26 +124,24 @@ class OrderBook:
             raise ValueError("no order at this price")
 
         aggregate_order = aggregate_orders_for_side[index]
-        order = aggregate_order.find(order_id)
-        order.size = existing_order.size
+        self.orders[order_id] = aggregate_order.change_size(order_id, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
-        order = self.orders[order_id]
+        existing_order = self.orders[order_id]
 
-        aggregate_orders = (
-            self.bids if order.side == Side.BUY
+        aggregate_orders_for_side = (
+            self.bids if existing_order.side == Side.BUY
             else self.offers
         )
 
         index = index_of(
-            aggregate_orders,
-            lambda x: x.price == order.price
+            aggregate_orders_for_side,
+            lambda x: x.price == existing_order.price
         )
         if index == -1:
             raise ValueError("no orders at this price")
 
-        aggregate_order = aggregate_orders[index]
-        if order_id not in aggregate_order:
-            raise KeyError("invalid order id")
-
-        del aggregate_order[order_id]
+        aggregate_order = aggregate_orders_for_side[index]
+        aggregate_order.cancel(order_id)
+        if len(aggregate_order) == 0:
+            del aggregate_orders_for_side[index]
