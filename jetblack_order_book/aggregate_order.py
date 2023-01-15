@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections import deque
 from decimal import Decimal
-from typing import Optional
 
 from .linq import contains, first, index_of
 from .limit_order import LimitOrder
@@ -14,7 +14,7 @@ class AggregateOrder:
 
     def __init__(self, order: LimitOrder) -> None:
         self._price = order.price
-        self._orders = [order]
+        self._orders = deque([order])
 
     @property
     def price(self) -> Decimal:
@@ -40,11 +40,6 @@ class AggregateOrder:
     def __bool__(self) -> bool:
         return len(self._orders) != 0
 
-    def __iadd__(self, rhs: LimitOrder) -> AggregateOrder:
-        assert isinstance(rhs, LimitOrder)
-        self._orders.append(rhs)
-        return self
-
     def __len__(self) -> int:
         return len(self._orders)
 
@@ -57,14 +52,14 @@ class AggregateOrder:
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
 
-    def pop(self, index: Optional[int] = None) -> LimitOrder:
-        if index is not None:
-            return self._orders.pop(index)
-        else:
-            return self._orders.pop()
+    def popleft(self) -> LimitOrder:
+        return self._orders.popleft()
 
-    def insert(self, index: int, order: LimitOrder) -> None:
-        self._orders.insert(index, order)
+    def append(self, order: LimitOrder) -> None:
+        self._orders.append(order)
+
+    def appendleft(self, order: LimitOrder) -> None:
+        self._orders.appendleft(order)
 
     def find(self, order_id: int) -> LimitOrder:
         return first(self._orders, lambda x: x.order_id == order_id)

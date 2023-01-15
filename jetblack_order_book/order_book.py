@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections import deque
 from decimal import Decimal
-from typing import Dict, List, Tuple
+from itertools import islice
+from typing import Deque, Dict, List, Tuple
 
 from .aggregate_order import AggregateOrder
 from .fill import Fill
@@ -18,8 +20,9 @@ class OrderBook:
             self,
     ) -> None:
         self.orders: Dict[int, LimitOrder] = {}
-        self.bids: List[AggregateOrder] = []
-        self.offers: List[AggregateOrder] = []
+        # bids and offers are ordered from low to high.
+        self.bids: Deque[AggregateOrder] = deque()
+        self.offers: Deque[AggregateOrder] = deque()
         self._next_order_id = 1
 
     def __repr__(self) -> str:
@@ -31,8 +34,14 @@ class OrderBook:
     def __format__(self, format_spec: str) -> str:
         levels = None if not format_spec else int(format_spec)
         # pylint: disable=invalid-unary-operand-type
-        bids = self.bids if levels is None else self.bids[-levels:]
-        offers = self.offers if levels is None else self.offers[:levels]
+        bids = self.bids if levels is None else tuple(
+            islice(self.bids, len(self.bids) - levels, len(self.bids))
+        )
+        offers = self.offers if levels is None else islice(
+            self.offers,
+            0,
+            levels
+        )
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
 
     def __eq__(self, other: object) -> bool:
@@ -58,14 +67,14 @@ class OrderBook:
 
         index = index_of(
             aggregate_orders,
-            lambda x: x.price < price
+            lambda x: x.price >= price
         )
         if index == -1:
             # Add new highest price level.
             aggregate_orders.append(AggregateOrder(order))
         elif aggregate_orders[index].price == order.price:
             # Aggregate to an existing price level.
-            aggregate_orders[index] += order
+            aggregate_orders[index].append(order)
         else:
             # Insert a new lowest price level
             aggregate_orders.insert(index, AggregateOrder(order))
@@ -81,7 +90,7 @@ class OrderBook:
         ):
             best_bids, best_offers = self.bids[-1], self.offers[0]
             while best_bids and best_offers:
-                best_bid, best_offer = best_bids.pop(0), best_offers.pop(0)
+                best_bid, best_offer = best_bids.popleft(), best_offers.popleft()
                 trade_size = min(best_bid.size, best_offer.size)
                 fills.append(
                     Fill(
@@ -95,9 +104,9 @@ class OrderBook:
                     size=best_offer.size - trade_size
                 )
                 if best_bid.size != 0:
-                    best_bids.insert(0, best_bid)
+                    best_bids.appendleft(best_bid)
                 if best_offer.size != 0:
-                    best_offers.insert(0, best_offer)
+                    best_offers.appendleft(best_offer)
 
             if not best_bids:
                 del self.bids[-1]
