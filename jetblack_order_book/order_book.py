@@ -6,24 +6,10 @@ from decimal import Decimal
 from typing import Dict, List, Tuple
 
 from .aggregate_order import AggregateOrder
+from .fill import Fill
 from .linq import index_of
 from .limit_order import LimitOrder
 from .order_types import Side
-
-
-class Fill:
-
-    def __init__(
-            self,
-            buy_order_id: int,
-            sell_order_id: int,
-            price: Decimal,
-            size: int
-    ) -> None:
-        self.buy_order_id = buy_order_id
-        self.sell_order_id = sell_order_id
-        self.price = price
-        self.size = size
 
 
 class OrderBook:
@@ -34,7 +20,7 @@ class OrderBook:
         self.orders: Dict[int, LimitOrder] = {}
         self.buys: List[AggregateOrder] = []
         self.sells: List[AggregateOrder] = []
-        self._next_order_id = 0
+        self._next_order_id = 1
 
     def __repr__(self) -> str:
         return f"OrderBook({self.buys}, {self.sells})"
@@ -107,6 +93,11 @@ class OrderBook:
                     del buys[0]
                 if sells.size == 0:
                     del sells[0]
+
+            if not buys:
+                del self.buys[-1]
+            if not sells:
+                del self.sells[0]
 
         return order.order_id, fills
 

@@ -36,6 +36,9 @@ class AggregateOrder:
             self.size == other.size
         )
 
+    def __bool__(self) -> bool:
+        return len(self._orders) != 0
+
     def __iadd__(self, rhs: LimitOrder) -> AggregateOrder:
         assert isinstance(rhs, LimitOrder)
         self._orders.append(rhs)
@@ -44,11 +47,11 @@ class AggregateOrder:
     def __len__(self) -> int:
         return len(self._orders)
 
-    def __getitem__(self, order_id: int) -> LimitOrder:
-        return first(self._orders, lambda x: x.order_id == order_id)
+    def __getitem__(self, index: int) -> LimitOrder:
+        return self._orders[index]
 
-    def __delitem__(self, order_id: int) -> None:
-        self._orders = where(self._orders, lambda x: x != order_id)
+    def __delitem__(self, index: int) -> None:
+        del self._orders[index]
 
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
