@@ -70,6 +70,9 @@ class OrderBook:
             # Insert a new lowest price level
             aggregate_orders.insert(index, AggregateOrder(order))
 
+        return order.order_id, self.match()
+
+    def match(self) -> List[Fill]:
         fills: List[Fill] = []
         while (
                 self.buys and
@@ -99,7 +102,7 @@ class OrderBook:
             if not sells:
                 del self.sells[0]
 
-        return order.order_id, fills
+        return fills
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
         assert size > 0, "size must be greater than 0"

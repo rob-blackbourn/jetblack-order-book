@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from jetblack_order_book import OrderBook, Fill, LimitOrder, Side
+from jetblack_order_book import OrderBook, Fill, Side
 
 
 def test_order_book():

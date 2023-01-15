@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from .linq import first, where, contains, index_of
+from .linq import contains
 from .limit_order import LimitOrder
 
 
