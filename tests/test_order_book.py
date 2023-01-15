@@ -39,3 +39,9 @@ def test_smoke():
     assert str(
         order_book
     ) == '9.5x30,10.0x30,10.5x5 : 11.0x10,11.5x15,12.0x20,13.5x30'
+
+    order_book.add_limit_order(Side.SELL, Decimal('10.5'), 15)
+
+    assert str(
+        order_book
+    ) == '9.5x30,10.0x30 : 10.5x10,11.0x10,11.5x15,12.0x20,13.5x30'

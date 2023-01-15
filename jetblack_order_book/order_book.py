@@ -63,6 +63,7 @@ class OrderBook:
         )
 
         order = LimitOrder(self._next_order_id, side, price, size)
+        self.orders[order.order_id] = order
         self._next_order_id += 1
 
         index = index_of(
@@ -79,9 +80,9 @@ class OrderBook:
             # Insert a new lowest price level
             aggregate_orders.insert(index, AggregateOrder(order))
 
-        return order.order_id, self.match()
+        return order.order_id, self._match(order.order_id)
 
-    def match(self) -> List[Fill]:
+    def _match(self, aggressor_order_id: int) -> List[Fill]:
         fills: List[Fill] = []
         while (
                 self.bids and
@@ -90,23 +91,34 @@ class OrderBook:
         ):
             best_bids, best_offers = self.bids[-1], self.offers[0]
             while best_bids and best_offers:
-                best_bid, best_offer = best_bids.popleft(), best_offers.popleft()
-                trade_size = min(best_bid.size, best_offer.size)
+                bid, offer = best_bids.pop(), best_offers.popleft()
+                trade_size = min(bid.size, offer.size)
+                trade_price = (
+                    bid.price if bid.order_id == aggressor_order_id
+                    else offer.price
+                )
                 fills.append(
                     Fill(
-                        best_bid.order_id,
-                        best_offer.order_id,
-                        best_bid.price,
+                        bid.order_id,
+                        offer.order_id,
+                        trade_price,
                         trade_size)
                 )
-                best_bid = best_bid.replace(size=best_bid.size - trade_size)
-                best_offer = best_bid.replace(
-                    size=best_offer.size - trade_size
+                bid = bid.replace(size=bid.size - trade_size)
+                offer = offer.replace(
+                    size=offer.size - trade_size
                 )
-                if best_bid.size != 0:
-                    best_bids.appendleft(best_bid)
-                if best_offer.size != 0:
-                    best_offers.appendleft(best_offer)
+                if bid.size == 0:
+                    del self.orders[bid.order_id]
+                else:
+                    best_bids.append(bid)
+                    self.orders[bid.order_id] = bid
+
+                if offer.size == 0:
+                    del self.orders[offer.order_id]
+                else:
+                    best_offers.appendleft(offer)
+                    self.orders[offer.order_id] = offer
 
             if not best_bids:
                 del self.bids[-1]
