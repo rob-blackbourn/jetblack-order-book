@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from .linq import contains
+from .linq import contains, first
 from .limit_order import LimitOrder
 
 
@@ -55,3 +55,6 @@ class AggregateOrder:
 
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
+
+    def find(self, order_id: int) -> LimitOrder:
+        return first(self._orders, lambda x: x.order_id == order_id)

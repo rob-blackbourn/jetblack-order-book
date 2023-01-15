@@ -18,12 +18,12 @@ class OrderBook:
             self,
     ) -> None:
         self.orders: Dict[int, LimitOrder] = {}
-        self.buys: List[AggregateOrder] = []
-        self.sells: List[AggregateOrder] = []
+        self.bids: List[AggregateOrder] = []
+        self.offers: List[AggregateOrder] = []
         self._next_order_id = 1
 
     def __repr__(self) -> str:
-        return f"OrderBook({self.buys}, {self.sells})"
+        return f"OrderBook({self.bids}, {self.offers})"
 
     def __str__(self) -> str:
         return format(self, "")
@@ -31,15 +31,15 @@ class OrderBook:
     def __format__(self, format_spec: str) -> str:
         levels = None if not format_spec else int(format_spec)
         # pylint: disable=invalid-unary-operand-type
-        buys = self.buys if levels is None else self.buys[-levels:]
-        sells = self.sells if levels is None else self.sells[:levels]
-        return f'{",".join(map(str, buys))} : {",".join(map(str, sells))}'
+        bids = self.bids if levels is None else self.bids[-levels:]
+        offers = self.offers if levels is None else self.offers[:levels]
+        return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
 
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            all(a == b for a, b in zip(self.buys, other.buys)) and
-            all(a == b for a, b in zip(self.sells, other.sells))
+            all(a == b for a, b in zip(self.bids, other.bids)) and
+            all(a == b for a, b in zip(self.offers, other.offers))
         )
 
     def add_limit_order(
@@ -49,8 +49,8 @@ class OrderBook:
             size: int
     ) -> Tuple[int, List[Fill]]:
         aggregate_orders = (
-            self.buys if side == Side.BUY
-            else self.sells
+            self.bids if side == Side.BUY
+            else self.offers
         )
 
         order = LimitOrder(self._next_order_id, side, price, size)
@@ -75,61 +75,62 @@ class OrderBook:
     def match(self) -> List[Fill]:
         fills: List[Fill] = []
         while (
-                self.buys and
-                self.sells and
-                self.buys[-1].price >= self.sells[0].price
+                self.bids and
+                self.offers and
+                self.bids[-1].price >= self.offers[0].price
         ):
-            buys, sells = self.buys[-1], self.sells[0]
-            while buys and sells:
-                buy, sell = buys[0], sells[0]
-                trade_size = min(buy.size, sell.size)
+            best_bids, best_offers = self.bids[-1], self.offers[0]
+            while best_bids and best_offers:
+                best_bid, best_offer = best_bids[0], best_offers[0]
+                trade_size = min(best_bid.size, best_offer.size)
                 fills.append(
                     Fill(
-                        buy.order_id,
-                        sell.order_id,
-                        buy.price,
+                        best_bid.order_id,
+                        best_offer.order_id,
+                        best_bid.price,
                         trade_size)
                 )
-                buy.size -= trade_size
-                sell.size -= sell.size
-                if buy.size == 0:
-                    del buys[0]
-                if sells.size == 0:
-                    del sells[0]
+                best_bid.size -= trade_size
+                best_offer.size -= best_offer.size
+                if best_bid.size == 0:
+                    del best_bids[0]
+                if best_offers.size == 0:
+                    del best_offers[0]
 
-            if not buys:
-                del self.buys[-1]
-            if not sells:
-                del self.sells[0]
+            if not best_bids:
+                del self.bids[-1]
+            if not best_offers:
+                del self.offers[0]
 
         return fills
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
         assert size > 0, "size must be greater than 0"
 
-        order = self.orders[order_id]
+        existing_order = self.orders[order_id]
 
-        aggregate_orders = (
-            self.buys if order.side == Side.BUY
-            else self.sells
+        aggregate_orders_for_side = (
+            self.bids if existing_order.side == Side.BUY
+            else self.offers
         )
 
         index = index_of(
-            aggregate_orders,
-            lambda x: x.price == order.price
+            aggregate_orders_for_side,
+            lambda x: x.price == existing_order.price
         )
         if index == -1:
             raise ValueError("no order at this price")
 
-        aggregate_order = aggregate_orders[index]
-        aggregate_order[order_id].size = order.size
+        aggregate_order = aggregate_orders_for_side[index]
+        order = aggregate_order.find(order_id)
+        order.size = existing_order.size
 
     def cancel_limit_order(self, order_id: int) -> None:
         order = self.orders[order_id]
 
         aggregate_orders = (
-            self.buys if order.side == Side.BUY
-            else self.sells
+            self.bids if order.side == Side.BUY
+            else self.offers
         )
 
         index = index_of(
