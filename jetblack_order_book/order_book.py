@@ -166,3 +166,5 @@ class OrderBook:
         aggregate_order.cancel(order_id)
         if len(aggregate_order) == 0:
             del aggregate_orders_for_side[index]
+
+        del self.orders[order_id]
