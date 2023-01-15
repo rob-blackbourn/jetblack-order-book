@@ -2,34 +2,39 @@
 
 from __future__ import annotations
 
-from typing import List
+from decimal import Decimal
+from typing import Dict, List, Tuple
 
 from .aggregate_order import AggregateOrder
-from .messages import Message
 from .linq import index_of
-from .order import Order
-from .order_types import Side, EventType
+from .limit_order import LimitOrder
+from .order_types import Side
+
+
+class Fill:
+
+    def __init__(
+            self,
+            buy_order_id: int,
+            sell_order_id: int,
+            price: Decimal,
+            size: int
+    ) -> None:
+        self.buy_order_id = buy_order_id
+        self.sell_order_id = sell_order_id
+        self.price = price
+        self.size = size
 
 
 class OrderBook:
 
     def __init__(
             self,
-            buys: List[AggregateOrder],
-            sells: List[AggregateOrder]
     ) -> None:
-        self.buys = buys
-        self.sells = sells
-
-        self._handlers = {
-            EventType.SUBMIT: self._handle_submit,
-            EventType.CANCEL: self._handle_cancel,
-            EventType.DELETE: self._handle_delete,
-            EventType.EXECUTE_VISIBLE: self._handle_execute_visible,
-            EventType.EXECUTE_HIDDEN: self._handle_execute_hidden,
-            EventType.CROSS: self._handle_cross,
-            EventType.HALT: self._handle_halt,
-        }
+        self.orders: Dict[int, LimitOrder] = {}
+        self.buys: List[AggregateOrder] = []
+        self.sells: List[AggregateOrder] = []
+        self._next_order_id = 0
 
     def __repr__(self) -> str:
         return f"OrderBook({self.buys}, {self.sells})"
@@ -51,102 +56,97 @@ class OrderBook:
             all(a == b for a, b in zip(self.sells, other.sells))
         )
 
-    def copy(self) -> OrderBook:
-        return OrderBook(
-            [order.copy() for order in self.buys],
-            [order.copy() for order in self.sells]
-        )
-
-    def process(self, message: Message) -> OrderBook:
-        return self._handlers[message.event_type](message)
-
-    def _handle_submit(self, message: Message) -> OrderBook:
-        order = Order(message.price, message.size, message.order_id)
-
-        order_book = self.copy()
+    def add_limit_order(
+            self,
+            side: Side,
+            price: Decimal,
+            size: int
+    ) -> Tuple[int, List[Fill]]:
         aggregate_orders = (
-            order_book.buys if message.side == Side.BUY
-            else order_book.sells
+            self.buys if side == Side.BUY
+            else self.sells
         )
+
+        order = LimitOrder(self._next_order_id, side, price, size)
+        self._next_order_id += 1
 
         index = index_of(
             aggregate_orders,
-            lambda x: order.price <= x.price
+            lambda x: x.price < price
         )
         if index == -1:
-            aggregate_orders.append(AggregateOrder([order]))
+            # Add new highest price level.
+            aggregate_orders.append(AggregateOrder(order))
         elif aggregate_orders[index].price == order.price:
+            # Aggregate to an existing price level.
             aggregate_orders[index] += order
         else:
-            aggregate_orders.insert(index, AggregateOrder([order]))
-            # del aggregate_orders[0 if message.side == Side.BUY else -1]
+            # Insert a new lowest price level
+            aggregate_orders.insert(index, AggregateOrder(order))
 
-        return order_book
+        fills: List[Fill] = []
+        while (
+                self.buys and
+                self.sells and
+                self.buys[-1].price >= self.sells[0].price
+        ):
+            buys, sells = self.buys[-1], self.sells[0]
+            while buys and sells:
+                buy, sell = buys[0], sells[0]
+                trade_size = min(buy.size, sell.size)
+                fills.append(
+                    Fill(
+                        buy.order_id,
+                        sell.order_id,
+                        buy.price,
+                        trade_size)
+                )
+                buy.size -= trade_size
+                sell.size -= sell.size
+                if buy.size == 0:
+                    del buys[0]
+                if sells.size == 0:
+                    del sells[0]
 
-    def _handle_cancel(self, message: Message) -> OrderBook:
-        # Cancellation (partial deletion of a limit order)
-        order_book = self.copy()
+        return order.order_id, fills
+
+    def amend_limit_order(self, order_id: int, size: int) -> None:
+        assert size > 0, "size must be greater than 0"
+
+        order = self.orders[order_id]
+
         aggregate_orders = (
-            order_book.buys if message.side == Side.BUY
-            else order_book.sells
+            self.buys if order.side == Side.BUY
+            else self.sells
         )
 
         index = index_of(
             aggregate_orders,
-            lambda x: x.price == message.price
+            lambda x: x.price == order.price
         )
         if index == -1:
             raise ValueError("no order at this price")
 
         aggregate_order = aggregate_orders[index]
-        order_id = message.order_id if message.order_id in aggregate_order else -1
-        aggregate_order[order_id].size -= message.size
-        if aggregate_order[order_id].size == 0:
-            raise ValueError("partial delete was the whole size")
+        aggregate_order[order_id].size = order.size
 
-        return order_book
+    def cancel_limit_order(self, order_id: int) -> None:
+        order = self.orders[order_id]
 
-    def _handle_delete(self, message: Message) -> OrderBook:
-        # Deletion (total deletion of a limit order)
-        order_book = self.copy()
         aggregate_orders = (
-            order_book.buys if message.side == Side.BUY
-            else order_book.sells
+            self.buys if order.side == Side.BUY
+            else self.sells
         )
 
         index = index_of(
             aggregate_orders,
-            lambda x: x.price == message.price
+            lambda x: x.price == order.price
         )
         if index == -1:
-            raise ValueError("no order at this price")
+            raise ValueError("no orders at this price")
 
         aggregate_order = aggregate_orders[index]
-        if message.order_id in aggregate_order:
-            if aggregate_order[message.order_id].size != message.size:
-                raise ValueError("invalid order size for delete")
-            del aggregate_order[message.order_id]
-        elif -1 in aggregate_order:
-            if aggregate_order[-1].size < message.size:
-                raise ValueError("invalid order size for anonymous delete")
-            elif aggregate_order[-1].size == message.size:
-                del aggregate_order[-1]
-            else:
-                aggregate_order[-1].size -= message.size
+        if order_id not in aggregate_order:
+            raise KeyError("invalid order id")
 
-        if aggregate_order.size == 0:
-            del aggregate_orders[index]
-
-        return order_book
-
-    def _handle_execute_visible(self, message: Message) -> OrderBook:
-        raise NotImplementedError("execute visible")
-
-    def _handle_execute_hidden(self, message: Message) -> OrderBook:
-        raise NotImplementedError("execute hidden")
-
-    def _handle_cross(self, message: Message) -> OrderBook:
-        raise NotImplementedError("cross")
-
-    def _handle_halt(self, message: Message) -> OrderBook:
-        raise NotImplementedError("halt")
+        del aggregate_order[order_id]

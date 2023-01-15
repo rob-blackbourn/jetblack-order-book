@@ -3,31 +3,25 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import List
 
-from .order import Order
+from .linq import first, where, contains, index_of
+from .limit_order import LimitOrder
 
 
 class AggregateOrder:
+    """A time priority aggregate order"""
 
-    def __init__(self, orders: List[Order]) -> None:
-        assert len(orders) > 0, "must be at least one order"
-        self.price = orders[0].price
-        assert all(
-            self.price == order.price for order in orders[1:]
-        ), "all orders must be the same price"
-        self._orders = {
-            order.order_id: order
-            for order in orders
-        }
+    def __init__(self, order: LimitOrder) -> None:
+        self._price = order.price
+        self._orders = [order]
 
-    @classmethod
-    def create(cls, price: Decimal, size: int, order_id: int = -1) -> AggregateOrder:
-        return AggregateOrder([Order(price, size, order_id)])
+    @property
+    def price(self) -> Decimal:
+        return self._price
 
     @property
     def size(self) -> int:
-        return sum(order.size for order in self._orders.values())
+        return sum(order.size for order in self._orders)
 
     def __repr__(self) -> str:
         return f"AggregateOrder({self._orders})"
@@ -42,27 +36,19 @@ class AggregateOrder:
             self.size == other.size
         )
 
-    def __iadd__(self, rhs: Order) -> AggregateOrder:
-        assert isinstance(rhs, Order)
-        self._orders[rhs.order_id] = rhs
+    def __iadd__(self, rhs: LimitOrder) -> AggregateOrder:
+        assert isinstance(rhs, LimitOrder)
+        self._orders.append(rhs)
         return self
 
     def __len__(self) -> int:
         return len(self._orders)
 
-    def __getitem__(self, order_id: int) -> Order:
-        return self._orders[order_id]
-
-    def __setitem__(self, order_id: int, order: Order) -> None:
-        self._orders[order_id] = order
+    def __getitem__(self, order_id: int) -> LimitOrder:
+        return first(self._orders, lambda x: x.order_id == order_id)
 
     def __delitem__(self, order_id: int) -> None:
-        del self._orders[order_id]
+        self._orders = where(self._orders, lambda x: x != order_id)
 
     def __contains__(self, order_id: int) -> bool:
-        return order_id in self._orders
-
-    def copy(self) -> AggregateOrder:
-        return AggregateOrder(
-            [order.copy() for order in self._orders.values()]
-        )
+        return contains(self._orders, lambda x: x.order_id == order_id)
