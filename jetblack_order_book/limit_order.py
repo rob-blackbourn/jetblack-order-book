@@ -8,15 +8,44 @@ from typing import NamedTuple, Optional
 from .order_types import Side
 
 
-class LimitOrder(NamedTuple):
+class LimitOrder:
 
-    order_id: int
-    side: Side
-    price: Decimal
-    size: int
+    def __init__(
+            self,
+            order_id: int,
+            side: Side,
+            price: Decimal,
+            size: int
+    ) -> None:
+        self._order_id = order_id
+        self._side = side
+        self._price = price
+        self.size = size
+
+    @property
+    def order_id(self) -> int:
+        return self._order_id
+
+    @property
+    def side(self) -> Side:
+        return self._side
+
+    @property
+    def price(self) -> Decimal:
+        return self._price
 
     def __str__(self) -> str:
         return f"{self.price}x{self.size}"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, LimitOrder) and
+            self.order_id == other.order_id and
+            self.side == other.side and
+            self.price == other.price and
+            self.size == other.size
+
+        )
 
     def copy(self) -> LimitOrder:
         return LimitOrder(self.order_id, self.side, self.price, self.size)

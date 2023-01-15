@@ -104,21 +104,18 @@ class OrderBook:
                         trade_price,
                         trade_size)
                 )
-                bid = bid.replace(size=bid.size - trade_size)
-                offer = offer.replace(
-                    size=offer.size - trade_size
-                )
+                bid.size -= trade_size
+                offer.size -= trade_size
+
                 if bid.size == 0:
                     del self.orders[bid.order_id]
                 else:
                     best_bids.append(bid)
-                    self.orders[bid.order_id] = bid
 
                 if offer.size == 0:
                     del self.orders[offer.order_id]
                 else:
                     best_offers.appendleft(offer)
-                    self.orders[offer.order_id] = offer
 
             if not best_bids:
                 del self.bids[-1]
