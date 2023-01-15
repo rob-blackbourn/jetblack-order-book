@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from .comparable import Comparable
 from .order_types import Side
 
 
-class LimitOrder:
+class LimitOrder(Comparable):
 
     def __init__(
             self,
@@ -27,32 +28,30 @@ class LimitOrder:
     def __str__(self) -> str:
         return f"{self.price}x{self.size}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            self.price == other.price and
-            self.size == other.size
-        )
+    def __hash__(self) -> int:
+        return hash((self.order_id, self.side, self.price, self.size))
 
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, LimitOrder):
-            raise ValueError("object must be a LimitOrder")
-        if other.side > self.side:
-            return True
-        elif other.side < self.side:
-            return False
-        elif other.price > self.price:
-            return True
-        elif other.price < self.price:
-            return False
-        elif other.size > self.size:
-            return True
-        elif other.size < self.size:
-            return False
-        elif other.order_id > self.order_id:
-            return True
+    def compare(self, other: Comparable) -> int:
+        assert isinstance(other, LimitOrder)
+
+        if self.side > other.side:
+            return 1
+        elif self.side < other.side:
+            return -1
+        elif self.price > other.price:
+            return 1
+        elif self.price < other.price:
+            return -1
+        elif self.size > other.size:
+            return 1
+        elif self.size < other.size:
+            return -1
+        elif self.order_id > other.order_id:
+            return 1
+        elif self.order_id < other.order_id:
+            return -1
         else:
-            return False
+            return 0
 
     def copy(self) -> LimitOrder:
         return LimitOrder(self.order_id, self.side, self.price, self.size)

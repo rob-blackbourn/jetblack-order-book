@@ -5,7 +5,7 @@ from decimal import Decimal
 from jetblack_order_book import LimitOrder, Side
 
 
-def test_comparison():
+def test_compare():
     order1 = LimitOrder(1, Side.BUY, Decimal('10.5'), 100)
     order2 = LimitOrder(2, Side.BUY, Decimal('10.5'), 100)
 
@@ -24,3 +24,7 @@ def test_comparison():
     assert order6 < order5, "lt by size"
 
     assert not (order1 < order1), "not lt when equal"
+
+    assert order1 == order1, "equal"
+
+    assert order1 != order2, "not equal"
