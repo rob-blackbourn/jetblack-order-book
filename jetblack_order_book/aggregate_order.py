@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from decimal import Decimal
 
-from .linq import contains, first, index_of
+from .linq import contains, index_of
 from .limit_order import LimitOrder
 
 

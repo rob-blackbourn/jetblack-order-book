@@ -57,6 +57,17 @@ class OrderBook:
             price: Decimal,
             size: int
     ) -> Tuple[int, List[Fill]]:
+        """Add a limit order to the order book.
+
+        Args:
+            side (Side): Buy or sell.
+            price (Decimal): The price at which the order should be executed.
+            size (int): The size of the order.
+
+        Returns:
+            Tuple[int, List[Fill]]: The order id and any fills that were
+            generated.
+        """
         # Make the limit order.
         order = LimitOrder(self._next_order_id, side, price, size)
         self.orders[order.order_id] = order
@@ -84,6 +95,8 @@ class OrderBook:
             # Insert a new lowest price level
             aggregate_orders_for_side.insert(index, AggregateOrder(order))
 
+        # Return the order id and any fills that were generated. The id of the
+        # order that instigated the changes is supplied.
         return order.order_id, self._match(order.order_id)
 
     def _match(self, aggressor_order_id: int) -> List[Fill]:
@@ -141,15 +154,27 @@ class OrderBook:
         return fills
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
+        """Amend the size of a limit order.
+
+        Args:
+            order_id (int): The order id.
+            size (int): The new size of the order.
+
+        Raises:
+            ValueError: When the size is less than or equal to 0.
+        """
         assert size > 0, "size must be greater than 0"
 
+        # Find the order.
         existing_order = self.orders[order_id]
 
+        # Get the aggregate orders in which the order exists.
         aggregate_orders_for_side = (
             self.bids if existing_order.side == Side.BUY
             else self.offers
         )
 
+        # Find the position of the order in the aggregate orders.
         index = index_of(
             aggregate_orders_for_side,
             lambda x: x.price == existing_order.price
@@ -157,10 +182,18 @@ class OrderBook:
         if index == -1:
             raise ValueError("no order at this price")
 
-        aggregate_order = aggregate_orders_for_side[index]
-        aggregate_order.change_size(order_id, size)
+        # Change the size.
+        aggregate_orders_for_side[index].change_size(order_id, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
+        """Cancel a limit order.
+
+        Args:
+            order_id (int): The order id.
+
+        Raises:
+            ValueError: If the order cannot be found.
+        """
         existing_order = self.orders[order_id]
 
         aggregate_orders_for_side = (
@@ -173,11 +206,13 @@ class OrderBook:
             lambda x: x.price == existing_order.price
         )
         if index == -1:
-            raise ValueError("no orders at this price")
+            raise KeyError("The aggregate order could not be found")
 
         aggregate_order = aggregate_orders_for_side[index]
         aggregate_order.cancel(order_id)
         if len(aggregate_order) == 0:
+            # If there are no orders left at this price level, delete the
+            # aggregate order.
             del aggregate_orders_for_side[index]
 
         del self.orders[order_id]
