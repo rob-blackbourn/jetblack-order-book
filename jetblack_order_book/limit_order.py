@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import NamedTuple, Optional
+from typing import Optional
 
 from .order_types import Side
 
