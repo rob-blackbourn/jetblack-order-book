@@ -120,13 +120,13 @@ class OrderBook:
 
                 # Decrement the orders by the trade size, then check if the
                 # orders have been completely executed.
-                bid.size -= trade_size
-                offer.size -= trade_size
 
+                bid.size -= trade_size
                 if bid.size == 0:
                     del best_bids[0]
                     del self.orders[bid.order_id]
 
+                offer.size -= trade_size
                 if offer.size == 0:
                     del self.orders[offer.order_id]
                     del best_offers[0]
