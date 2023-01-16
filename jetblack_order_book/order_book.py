@@ -158,7 +158,7 @@ class OrderBook:
             raise ValueError("no order at this price")
 
         aggregate_order = aggregate_orders_for_side[index]
-        self.orders[order_id] = aggregate_order.change_size(order_id, size)
+        aggregate_order.change_size(order_id, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
         existing_order = self.orders[order_id]

@@ -85,8 +85,8 @@ def test_order_book_cancel_order():
     assert str(order_book) == ' : '
 
     # Add two buy orders at the same price
-    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
-    sell1, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
+    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
+    order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
     sell2, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 5)
 
     assert str(
