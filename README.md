@@ -1,4 +1,4 @@
-# jetblack-order-book
+# jetblack-order-book
 
 This is a demonstration of an algorithm for a time weighted limit order book
 written in Python.
