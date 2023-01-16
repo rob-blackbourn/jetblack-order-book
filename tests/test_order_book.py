@@ -38,7 +38,7 @@ def test_order_book_smoke():
     ) == '9.5x30,10.0x30,11.0x5 : 11.5x15,12.0x20,13.5x30'
 
 
-def test_order_book_partial_fill():
+def test_order_book_multiple_fills():
     order_book = OrderBook()
 
     assert str(order_book) == ' : '
@@ -58,3 +58,42 @@ def test_order_book_partial_fill():
     ]
 
     assert str(order_book) == ' : 10.5x5'
+
+
+def test_order_book_amend_size():
+    order_book = OrderBook()
+
+    assert str(order_book) == ' : '
+
+    # Add two buy orders at the same price
+    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
+    sell2, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
+
+    assert str(
+        order_book
+    ) == '10.5x10 : 10.6x10'
+
+    order_book.amend_limit_order(sell2, 5)
+    assert str(
+        order_book
+    ) == '10.5x10 : 10.6x5'
+
+
+def test_order_book_cancel_order():
+    order_book = OrderBook()
+
+    assert str(order_book) == ' : '
+
+    # Add two buy orders at the same price
+    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
+    sell1, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
+    sell2, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 5)
+
+    assert str(
+        order_book
+    ) == '10.5x10 : 10.6x15'
+
+    order_book.cancel_limit_order(sell2)
+    assert str(
+        order_book
+    ) == '10.5x10 : 10.6x10'
