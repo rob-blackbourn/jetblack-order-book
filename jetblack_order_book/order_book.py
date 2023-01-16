@@ -91,7 +91,7 @@ class OrderBook:
         ):
             best_bids, best_offers = self.bids[-1], self.offers[0]
             while best_bids and best_offers:
-                bid, offer = best_bids.pop(), best_offers.popleft()
+                bid, offer = best_bids.popleft(), best_offers.popleft()
                 trade_size = min(bid.size, offer.size)
                 trade_price = (
                     bid.price if bid.order_id == aggressor_order_id
@@ -110,7 +110,7 @@ class OrderBook:
                 if bid.size == 0:
                     del self.orders[bid.order_id]
                 else:
-                    best_bids.append(bid)
+                    best_bids.appendleft(bid)
 
                 if offer.size == 0:
                     del self.orders[offer.order_id]

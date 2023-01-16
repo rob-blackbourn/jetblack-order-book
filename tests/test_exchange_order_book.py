@@ -5,7 +5,7 @@ from decimal import Decimal
 from jetblack_order_book import ExchangeOrderBook, Fill, Side
 
 
-def test_smoke():
+def test_exchange_order_book_smoke():
     order_book = ExchangeOrderBook(["AAPL", "MSFT"])
 
     orders = [
