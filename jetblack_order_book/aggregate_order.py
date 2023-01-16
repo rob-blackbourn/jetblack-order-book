@@ -52,9 +52,6 @@ class AggregateOrder:
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
 
-    def pop(self) -> LimitOrder:
-        return self._orders.pop()
-
     def popleft(self) -> LimitOrder:
         return self._orders.popleft()
 
