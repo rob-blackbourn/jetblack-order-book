@@ -8,6 +8,7 @@ from jetblack_order_book import OrderBook, Fill, Side
 def test_order_book_smoke():
     order_book = OrderBook()
 
+    # Build up the book
     order_book.add_limit_order(Side.BUY, Decimal('10.0'), 10)
     order_book.add_limit_order(Side.BUY, Decimal('10.5'), 5)
     order_book.add_limit_order(Side.BUY, Decimal('10.0'), 20)
@@ -21,11 +22,20 @@ def test_order_book_smoke():
         order_book
     ) == '9.5x30,10.0x30,10.5x5 : 11.0x10,11.5x15,12.0x20,13.5x30'
 
-    order_book.add_limit_order(Side.SELL, Decimal('10.5'), 15)
-
+    _, fills = order_book.add_limit_order(Side.SELL, Decimal('10.5'), 15)
+    assert len(fills) == 1
+    assert fills[0].size == 5
     assert str(
         order_book
     ) == '9.5x30,10.0x30 : 10.5x10,11.0x10,11.5x15,12.0x20,13.5x30'
+
+    # Cross the book. The price should be that of the aggressor (the buy).
+    _, fills = order_book.add_limit_order(Side.BUY, Decimal('11.0'), 25)
+    assert len(fills) == 2
+    assert all(fill.price == Decimal('11.0') for fill in fills)
+    assert str(
+        order_book
+    ) == '9.5x30,10.0x30,11.0x5 : 11.5x15,12.0x20,13.5x30'
 
 
 def test_order_book_partial_fill():
