@@ -99,7 +99,7 @@ class OrderBook:
             while best_bids and best_offers:
                 # The aggregate orders are ordered by time, so the first order
                 # takes precedence.
-                bid, offer = best_bids.popleft(), best_offers.popleft()
+                bid, offer = best_bids[0], best_offers[0]
 
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
@@ -124,16 +124,12 @@ class OrderBook:
                 offer.size -= trade_size
 
                 if bid.size == 0:
+                    del best_bids[0]
                     del self.orders[bid.order_id]
-                else:
-                    # As execution was incomplete the remainder is put back.
-                    best_bids.appendleft(bid)
 
                 if offer.size == 0:
                     del self.orders[offer.order_id]
-                else:
-                    # As execution was incomplete the remainder is put back.
-                    best_offers.appendleft(offer)
+                    del best_offers[0]
 
             # if all orders have been executed at this price level remove the
             # price level.
