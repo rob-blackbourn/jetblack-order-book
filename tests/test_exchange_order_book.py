@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from jetblack_order_book import ExchangeOrderBook, Side
+from jetblack_order_book import ExchangeOrderBook, Side, Fill
 
 
 def test_exchange_order_book_smoke():
@@ -34,3 +34,14 @@ def test_exchange_order_book_smoke():
     assert str(
         order_book.books['MSFT']
     ) == '239.12x25,239.14x30,239.23x5 : 239.28x15,239.30x2,239.32x80'
+
+    order_id, fills = order_book.add_limit_order(
+        'AAPL',
+        Side.BUY,
+        Decimal('134.79'),
+        20
+    )
+    assert len(fills) == 1
+    assert fills == [
+        Fill(8, 3, Decimal('134.79'), 20)
+    ]
