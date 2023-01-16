@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from jetblack_order_book import ExchangeOrderBook, Fill, Side
+from jetblack_order_book import ExchangeOrderBook, Side
 
 
 def test_exchange_order_book_smoke():
