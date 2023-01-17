@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .limit_order import LimitOrder
+from .order_manager import OrderManager
 from .order_types import Side
 
 
@@ -18,12 +18,11 @@ class OrderBook:
     def __init__(
             self,
     ) -> None:
-        self._orders: Dict[int, LimitOrder] = {}
+        self._orders = OrderManager()
         self._sides = {
             Side.BUY: AggregateOrderSide(Side.BUY),
             Side.SELL: AggregateOrderSide(Side.SELL)
         }
-        self._next_order_id = 1
 
     @property
     def bids(self) -> AggregateOrderSide:
@@ -67,7 +66,7 @@ class OrderBook:
             Tuple[int, List[Fill]]: The order id and any fills that were
             generated.
         """
-        order = self._create_order(side, price, size)
+        order = self._orders.create(side, price, size)
         self._sides[order.side].add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
@@ -86,7 +85,7 @@ class OrderBook:
         """
         assert size > 0, "size must be greater than 0"
 
-        order = self._find_order(order_id)
+        order = self._orders.find(order_id)
         self._sides[order.side].amend_limit_order(order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
@@ -98,9 +97,9 @@ class OrderBook:
         Raises:
             ValueError: If the order cannot be found.
         """
-        order = self._find_order(order_id)
+        order = self._orders.find(order_id)
         self._sides[order.side].cancel_limit_order(order)
-        self._delete_order(order)
+        self._orders.delete(order)
 
     def _match(self, aggressor_order_id: int) -> List[Fill]:
         """Match bids against offers generating fills.
@@ -144,12 +143,12 @@ class OrderBook:
 
                 self.bids.best.first.size -= trade_size
                 if self.bids.best.first.size == 0:
-                    self._delete_order(self.bids.best.first)
+                    self._orders.delete(self.bids.best.first)
                     self.bids.best.delete_first()
 
                 self.offers.best.first.size -= trade_size
                 if self.offers.best.first.size == 0:
-                    self._delete_order(self.offers.best.first)
+                    self._orders.delete(self.offers.best.first)
                     self.offers.best.delete_first()
 
             # if all orders have been executed at this price level remove the
@@ -161,29 +160,12 @@ class OrderBook:
 
         return fills
 
-    def _create_order(
-            self,
-            side: Side,
-            price: Decimal,
-            size: int
-    ) -> LimitOrder:
-        order = LimitOrder(self._next_order_id, side, price, size)
-        self._orders[order.order_id] = order
-        self._next_order_id += 1
-        return order
-
-    def _find_order(self, order_id: int) -> LimitOrder:
-        return self._orders[order_id]
-
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
             self.bids == other.bids and
             self.offers == other.offers
         )
-
-    def _delete_order(self, order: LimitOrder) -> None:
-        del self._orders[order.order_id]
 
     def __repr__(self) -> str:
         return f"OrderBook({self.bids}, {self.offers})"
