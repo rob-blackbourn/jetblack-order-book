@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional
 
 from .order_types import Side
 
@@ -75,18 +74,4 @@ class LimitOrder:
             self.price == other.price and
             self.size == other.size
 
-        )
-
-    def replace(
-            self,
-            order_id: Optional[int] = None,
-            side: Optional[Side] = None,
-            price: Optional[Decimal] = None,
-            size: Optional[int] = None
-    ) -> LimitOrder:
-        return LimitOrder(
-            self.order_id if order_id is None else order_id,
-            self.side if side is None else side,
-            self.price if price is None else price,
-            self.size if size is None else size
         )

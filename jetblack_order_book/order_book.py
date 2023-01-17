@@ -13,6 +13,7 @@ from .order_types import Side
 
 
 class OrderBook:
+    """An order book"""
 
     def __init__(
             self,

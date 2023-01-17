@@ -27,6 +27,14 @@ class AggregateOrderSide:
         return bool(self._orders)
 
     def orders(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+        """Return the orders for the side.
+
+        Args:
+            levels (Optional[int]): The market depth to return.
+
+        Returns:
+            Sequence[AggregateOrder]: The orders.
+        """
         if levels is None:
             return self._orders
         levels = min(levels, len(self._orders))
@@ -41,15 +49,22 @@ class AggregateOrderSide:
 
     @property
     def best(self) -> AggregateOrder:
+        """Get the order at the best price level."""
         return self._orders[-1] if self.side == Side.BUY else self._orders[0]
 
     def delete_best(self) -> None:
+        """Delete the order at the best price level."""
         if self.side == Side.BUY:
             del self._orders[-1]
         else:
             del self._orders[0]
 
     def add_limit_order(self, order: LimitOrder):
+        """Add a limit order.
+
+        Args:
+            order (LimitOrder): The order.
+        """
         # Find where the order should go.
         index = index_of(
             self._orders,
@@ -67,6 +82,15 @@ class AggregateOrderSide:
             self._orders.insert(index, AggregateOrder(order))
 
     def amend_limit_order(self, order: LimitOrder, size: int) -> None:
+        """Amend a limit order.
+
+        Args:
+            order (LimitOrder): The order.
+            size (int): The new size.
+
+        Raises:
+            ValueError: If there are no orders at the price.
+        """
         # Find the position of the order in the aggregate orders.
         index = index_of(
             self._orders,
@@ -79,7 +103,14 @@ class AggregateOrderSide:
         self._orders[index].change_size(order.order_id, size)
 
     def cancel_limit_order(self, order: LimitOrder) -> None:
-        pass
+        """Cancel a limit order.
+
+        Args:
+            order (LimitOrder): The order
+
+        Raises:
+            KeyError: If the order is not in this side.
+        """
         index = index_of(
             self._orders,
             lambda x: x.price == order.price

@@ -40,6 +40,7 @@ class AggregateOrder:
 
     @property
     def size(self) -> int:
+        """The aggregate size of the order."""
         return sum(order.size for order in self._orders)
 
     def __repr__(self) -> str:
@@ -56,7 +57,7 @@ class AggregateOrder:
         )
 
     def __bool__(self) -> bool:
-        """Check if there are any orders inthe aggregate order.
+        """Check if there are any orders in the aggregate order.
 
         Returns:
             bool: Returns true if the aggregate order contains orders.
@@ -77,9 +78,11 @@ class AggregateOrder:
 
     @property
     def first(self) -> LimitOrder:
+        """The first order to process."""
         return self._orders[0]
 
     def delete_first(self) -> None:
+        """Delete the first order"""
         del self._orders[0]
 
     def append(self, order: LimitOrder) -> None:

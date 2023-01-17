@@ -6,6 +6,7 @@ from jetblack_order_book import ExchangeOrderBook, Side, Fill
 
 
 def test_smoke():
+    """Smoke test"""
     order_book = ExchangeOrderBook(["AAPL", "MSFT"])
 
     orders = [
