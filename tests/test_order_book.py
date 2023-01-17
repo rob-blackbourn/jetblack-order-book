@@ -5,7 +5,10 @@ from decimal import Decimal
 from jetblack_order_book import OrderBook, Fill, Side
 
 
-def test_order_book_smoke():
+def test_smoke():
+    """
+    A test exercising many features.
+    """
     order_book = OrderBook()
 
     # Build up the book
@@ -39,6 +42,10 @@ def test_order_book_smoke():
 
 
 def test_partial_fill():
+    """
+    A partial fill is an order which matches less than the full amount of the
+    matched order, leaving som of the matched order in the book.
+    """
     order_book = OrderBook()
 
     assert str(order_book) == ' : '
@@ -52,7 +59,10 @@ def test_partial_fill():
     assert str(order_book) == '10.5x5 : '
 
 
-def test_order_book_multiple_fills():
+def test_order_time_order():
+    """
+    Orders at the same price should be executed in the order they are received.
+    """
     order_book = OrderBook()
 
     assert str(order_book) == ' : '
