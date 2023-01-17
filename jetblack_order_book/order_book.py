@@ -98,26 +98,24 @@ class OrderBook:
                 self.offers and
                 self.bids.best.price >= self.offers.best.price
         ):
-            # The best bid is the highest price (at the end), while the best
-            # offer is the lowest price (at the start).
             while self.bids.best and self.offers.best:
-                # The aggregate orders are ordered by time, so the first order
-                # takes precedence.
-                bid, offer = self.bids.best.first, self.offers.best.first
-
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
                 # the best opposing price.
-                trade_size = min(bid.size, offer.size)
+                trade_size = min(
+                    self.bids.best.first.size,
+                    self.offers.best.first.size
+                )
                 trade_price = (
-                    bid.price if bid.order_id == aggressor_order_id
-                    else offer.price
+                    self.bids.best.first.price
+                    if self.bids.best.first.order_id == aggressor_order_id
+                    else self.offers.best.first.price
                 )
 
                 fills.append(
                     Fill(
-                        bid.order_id,
-                        offer.order_id,
+                        self.bids.best.first.order_id,
+                        self.offers.best.first.order_id,
                         trade_price,
                         trade_size)
                 )
@@ -125,14 +123,14 @@ class OrderBook:
                 # Decrement the orders by the trade size, then check if the
                 # orders have been completely executed.
 
-                bid.size -= trade_size
-                if bid.size == 0:
+                self.bids.best.first.size -= trade_size
+                if self.bids.best.first.size == 0:
+                    del self.orders[self.bids.best.first.order_id]
                     self.bids.best.delete_first()
-                    del self.orders[bid.order_id]
 
-                offer.size -= trade_size
-                if offer.size == 0:
-                    del self.orders[offer.order_id]
+                self.offers.best.first.size -= trade_size
+                if self.offers.best.first.size == 0:
+                    del self.orders[self.offers.best.first.order_id]
                     self.offers.best.delete_first()
 
             # if all orders have been executed at this price level remove the
