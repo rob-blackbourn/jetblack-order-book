@@ -103,12 +103,6 @@ class AggregateOrder:
 
         del self._orders[index]
 
-    def __repr__(self) -> str:
-        return f"AggregateOrder({self._orders})"
-
-    def __str__(self) -> str:
-        return f"{self.price}x{self.size}"
-
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
@@ -129,3 +123,9 @@ class AggregateOrder:
 
     def __contains__(self, order_id: int) -> bool:
         return any(x.order_id == order_id for x in self._orders)
+
+    def __repr__(self) -> str:
+        return f"AggregateOrder({self._orders})"
+
+    def __str__(self) -> str:
+        return f"{self.price}x{self.size}"
