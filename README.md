@@ -13,9 +13,9 @@ At the base layer there is a `LimitOrder` which holds the `order_id`, `side`, `p
 
 As multiple orders can be placed at the same price, each price holds an `AggregateOrder` which contains a queue of all the individual orders.
 Since the orders are executed in the sequence in which they were placed (FIFO), new orders are appended to the back of the queue,
-while orders to execute are taken from the front of the queue.
+while orders to execute are taken from the front.
 
-The aggregated orders are arranged by price with the `AggregatedOrderSide` class.
+The aggregated orders are arranged by price with the `AggregateOrderSide` class.
 This arranges the aggregate orders by price ascending, so the best bid is the last
 aggregated order, and the best offer is the first aggregated order.
 
