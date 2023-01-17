@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections import deque
 from decimal import Decimal
+from typing import Optional
 
 from .utils import index_of
-from .limit_order import LimitOrder
+from .limit_order import LimitOrder, Style
 
 
 class AggregateOrder:
@@ -102,6 +103,28 @@ class AggregateOrder:
             raise KeyError("order not found")
 
         del self._orders[index]
+
+    def handle_fill_or_kill(
+            self,
+            order: AggregateOrder
+    ) -> Optional[AggregateOrder]:
+        if self.first.order_id > order.first.order_id:
+            # Ensure time weighted treatment.
+            return order.handle_fill_or_kill(self)
+
+        if (
+            self.first.style == Style.FILL_OR_KILL and
+            self.first.size > order.first.size
+        ):
+            return self
+
+        if (
+            order.first.style == Style.FILL_OR_KILL and
+            order.first.size > self.first.size
+        ):
+            return order
+
+        return None
 
     def __eq__(self, other: object) -> bool:
         return (

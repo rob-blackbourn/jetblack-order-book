@@ -32,7 +32,7 @@ class ExchangeOrderBook:
             price: Decimal,
             size: int,
             style: Style
-    ) -> Tuple[int, List[Fill]]:
+    ) -> Tuple[int, List[Fill], List[int]]:
         """Add a limit order for a ticker.
 
         Args:
@@ -43,7 +43,7 @@ class ExchangeOrderBook:
             style (Style): The order style.
 
         Returns:
-            Tuple[int, List[Fill]]: The id of the order and any fills that
+            Tuple[int, List[Fill], List[int]]: The id of the order and any fills that
             were generated.
         """
         order_book = self.books[ticker]

@@ -36,7 +36,7 @@ def test_smoke():
         order_book.books['MSFT']
     ) == '239.12x25,239.14x30,239.23x5 : 239.28x15,239.30x2,239.32x80'
 
-    _, fills = order_book.add_limit_order(
+    _, fills, _ = order_book.add_limit_order(
         'AAPL',
         Side.BUY,
         Decimal('134.79'),
