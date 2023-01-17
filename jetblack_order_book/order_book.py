@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from collections import deque
 from decimal import Decimal
-from itertools import islice
-from typing import Deque, Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from .aggregate_order import AggregateOrder
+from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .linq import index_of
 from .limit_order import LimitOrder
 from .order_types import Side
 
@@ -21,8 +19,8 @@ class OrderBook:
     ) -> None:
         self.orders: Dict[int, LimitOrder] = {}
         # bids and offers are ordered from low to high.
-        self.bids: Deque[AggregateOrder] = deque()
-        self.offers: Deque[AggregateOrder] = deque()
+        self.bids = AggregateOrderSide(Side.BUY)
+        self.offers = AggregateOrderSide(Side.SELL)
         self._next_order_id = 1
 
     def __repr__(self) -> str:
@@ -34,22 +32,10 @@ class OrderBook:
     def __format__(self, format_spec: str) -> str:
         levels = None if not format_spec else int(format_spec)
         assert levels is None or levels > 0, 'levels should be > 0'
-        bids, offers = self.best(levels)
+        bids, offers = self.book_depth(levels)
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
 
-    def _get_bids(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
-        if levels is None:
-            return self.bids
-        levels = min(levels, len(self.bids))
-        return tuple(islice(self.bids, len(self.bids) - levels, len(self.bids)))
-
-    def _get_offers(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
-        if levels is None:
-            return self.offers
-        levels = min(levels, len(self.offers))
-        return tuple(islice(self.offers, 0, levels))
-
-    def best(
+    def book_depth(
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
@@ -62,13 +48,13 @@ class OrderBook:
             Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]: The best
                 bids and offers.
         """
-        return self._get_bids(levels), self._get_offers(levels)
+        return self.bids.orders(levels), self.offers.orders(levels)
 
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            all(a == b for a, b in zip(self.bids, other.bids)) and
-            all(a == b for a, b in zip(self.offers, other.offers))
+            self.bids == other.bids and
+            self.offers == other.offers
         )
 
     def add_limit_order(
@@ -99,21 +85,7 @@ class OrderBook:
             else self.offers
         )
 
-        # Find where the order should go.
-        index = index_of(
-            aggregate_orders_for_side,
-            lambda x: x.price >= price
-        )
-        if index == -1:
-            # Add new highest price level.
-            aggregate_orders_for_side.append(AggregateOrder(order))
-        elif aggregate_orders_for_side[index].price == order.price:
-            # Add the order to an existing price level. Adding to the end
-            # means newer orders are executed first (time weighted).
-            aggregate_orders_for_side[index].append(order)
-        else:
-            # Insert a new lowest price level
-            aggregate_orders_for_side.insert(index, AggregateOrder(order))
+        aggregate_orders_for_side.add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
         # order that instigated the changes is supplied.
@@ -124,15 +96,14 @@ class OrderBook:
         while (
                 self.bids and
                 self.offers and
-                self.bids[-1].price >= self.offers[0].price
+                self.bids.best.price >= self.offers.best.price
         ):
             # The best bid is the highest price (at the end), while the best
             # offer is the lowest price (at the start).
-            best_bids, best_offers = self.bids[-1], self.offers[0]
-            while best_bids and best_offers:
+            while self.bids.best and self.offers.best:
                 # The aggregate orders are ordered by time, so the first order
                 # takes precedence.
-                bid, offer = best_bids[0], best_offers[0]
+                bid, offer = self.bids.best.first, self.offers.best.first
 
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
@@ -156,20 +127,20 @@ class OrderBook:
 
                 bid.size -= trade_size
                 if bid.size == 0:
-                    del best_bids[0]
+                    self.bids.best.delete_first()
                     del self.orders[bid.order_id]
 
                 offer.size -= trade_size
                 if offer.size == 0:
                     del self.orders[offer.order_id]
-                    del best_offers[0]
+                    self.offers.best.delete_first()
 
             # if all orders have been executed at this price level remove the
             # price level.
-            if not best_bids:
-                del self.bids[-1]
-            if not best_offers:
-                del self.offers[0]
+            if not self.bids.best:
+                self.bids.delete_best()
+            if not self.offers.best:
+                self.offers.delete_best()
 
         return fills
 
@@ -194,16 +165,7 @@ class OrderBook:
             else self.offers
         )
 
-        # Find the position of the order in the aggregate orders.
-        index = index_of(
-            aggregate_orders_for_side,
-            lambda x: x.price == existing_order.price
-        )
-        if index == -1:
-            raise ValueError("no order at this price")
-
-        # Change the size.
-        aggregate_orders_for_side[index].change_size(order_id, size)
+        aggregate_orders_for_side.amend_limit_order(existing_order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
         """Cancel a limit order.
@@ -221,18 +183,6 @@ class OrderBook:
             else self.offers
         )
 
-        index = index_of(
-            aggregate_orders_for_side,
-            lambda x: x.price == existing_order.price
-        )
-        if index == -1:
-            raise KeyError("The aggregate order could not be found")
-
-        aggregate_order = aggregate_orders_for_side[index]
-        aggregate_order.cancel(order_id)
-        if len(aggregate_order) == 0:
-            # If there are no orders left at this price level, delete the
-            # aggregate order.
-            del aggregate_orders_for_side[index]
+        aggregate_orders_for_side.cancel_limit_order(existing_order)
 
         del self.orders[order_id]

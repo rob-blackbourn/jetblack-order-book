@@ -61,6 +61,9 @@ class LimitOrder:
         """
         return self._price
 
+    def __repr__(self) -> str:
+        return f"LimitOrder({self._order_id}, {self._side}, {self._price}, {self.size})"
+
     def __str__(self) -> str:
         return f"{self.price}x{self.size}"
 

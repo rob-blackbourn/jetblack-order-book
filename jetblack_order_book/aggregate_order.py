@@ -75,6 +75,13 @@ class AggregateOrder:
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
 
+    @property
+    def first(self) -> LimitOrder:
+        return self._orders[0]
+
+    def delete_first(self) -> None:
+        del self._orders[0]
+
     def append(self, order: LimitOrder) -> None:
         """Add a new order at the price level of this aggregate order.
 
