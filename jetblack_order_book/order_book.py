@@ -24,18 +24,6 @@ class OrderBook:
         self.offers = AggregateOrderSide(Side.SELL)
         self._next_order_id = 1
 
-    def __repr__(self) -> str:
-        return f"OrderBook({self.bids}, {self.offers})"
-
-    def __str__(self) -> str:
-        return format(self, "")
-
-    def __format__(self, format_spec: str) -> str:
-        levels = None if not format_spec else int(format_spec)
-        assert levels is None or levels > 0, 'levels should be > 0'
-        bids, offers = self.book_depth(levels)
-        return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
-
     def book_depth(
             self,
             levels: Optional[int]
@@ -50,23 +38,6 @@ class OrderBook:
                 bids and offers.
         """
         return self.bids.orders(levels), self.offers.orders(levels)
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            self.bids == other.bids and
-            self.offers == other.offers
-        )
-
-    def _create_order(
-            self,
-            side: Side,
-            price: Decimal,
-            size: int
-    ) -> LimitOrder:
-        order = LimitOrder(self._next_order_id, side, price, size)
-        self._next_order_id += 1
-        return order
 
     def add_limit_order(
             self,
@@ -101,7 +72,58 @@ class OrderBook:
         # order that instigated the changes is supplied.
         return order.order_id, self._match(order.order_id)
 
+    def amend_limit_order(self, order_id: int, size: int) -> None:
+        """Amend the size of a limit order.
+
+        Args:
+            order_id (int): The order id.
+            size (int): The new size of the order.
+
+        Raises:
+            ValueError: When the size is less than or equal to 0.
+        """
+        assert size > 0, "size must be greater than 0"
+
+        # Find the order.
+        order = self.orders[order_id]
+
+        # Get the aggregate orders in which the order exists.
+        aggregate_order_side = (
+            self.bids if order.side == Side.BUY
+            else self.offers
+        )
+
+        aggregate_order_side.amend_limit_order(order, size)
+
+    def cancel_limit_order(self, order_id: int) -> None:
+        """Cancel a limit order.
+
+        Args:
+            order_id (int): The order id.
+
+        Raises:
+            ValueError: If the order cannot be found.
+        """
+        order = self.orders[order_id]
+
+        aggregate_order_side = (
+            self.bids if order.side == Side.BUY
+            else self.offers
+        )
+
+        aggregate_order_side.cancel_limit_order(order)
+
+        del self.orders[order_id]
+
     def _match(self, aggressor_order_id: int) -> List[Fill]:
+        """Match bids against offers generating fills.
+
+        Args:
+            aggressor_order_id (int): The order id that generated the match.
+
+        Returns:
+            List[Fill]: The fills.
+        """
         fills: List[Fill] = []
         while (
                 self.bids and
@@ -152,45 +174,31 @@ class OrderBook:
 
         return fills
 
-    def amend_limit_order(self, order_id: int, size: int) -> None:
-        """Amend the size of a limit order.
+    def _create_order(
+            self,
+            side: Side,
+            price: Decimal,
+            size: int
+    ) -> LimitOrder:
+        order = LimitOrder(self._next_order_id, side, price, size)
+        self._next_order_id += 1
+        return order
 
-        Args:
-            order_id (int): The order id.
-            size (int): The new size of the order.
-
-        Raises:
-            ValueError: When the size is less than or equal to 0.
-        """
-        assert size > 0, "size must be greater than 0"
-
-        # Find the order.
-        order = self.orders[order_id]
-
-        # Get the aggregate orders in which the order exists.
-        aggregate_order_side = (
-            self.bids if order.side == Side.BUY
-            else self.offers
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, type(self)) and
+            self.bids == other.bids and
+            self.offers == other.offers
         )
 
-        aggregate_order_side.amend_limit_order(order, size)
+    def __repr__(self) -> str:
+        return f"OrderBook({self.bids}, {self.offers})"
 
-    def cancel_limit_order(self, order_id: int) -> None:
-        """Cancel a limit order.
+    def __str__(self) -> str:
+        return format(self, "")
 
-        Args:
-            order_id (int): The order id.
-
-        Raises:
-            ValueError: If the order cannot be found.
-        """
-        order = self.orders[order_id]
-
-        aggregate_order_side = (
-            self.bids if order.side == Side.BUY
-            else self.offers
-        )
-
-        aggregate_order_side.cancel_limit_order(order)
-
-        del self.orders[order_id]
+    def __format__(self, format_spec: str) -> str:
+        levels = None if not format_spec else int(format_spec)
+        assert levels is None or levels > 0, 'levels should be > 0'
+        bids, offers = self.book_depth(levels)
+        return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
