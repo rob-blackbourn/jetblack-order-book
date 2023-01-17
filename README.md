@@ -3,6 +3,8 @@
 This is a demonstration implementation of an algorithm for a time weighted, limit order book
 written in Python.
 
+The orders support style `VANILLA` and `KILL_OR_FILL`.
+
 A limit order is an order that can be filled at a given price.
 
 The orders are "time weighted", in that older orders are executed before newer orders, where the prices are the same.
@@ -32,7 +34,7 @@ The following is taken from the tests.
 
 ```python
 from decimal import Decimal
-from jetblack_order_book import ExchangeOrderBook, Side, Fill
+from jetblack_order_book import ExchangeOrderBook, Side, Fill, Style
 
 # Create and exchange order book for two tickers.
 order_book = ExchangeOrderBook(["AAPL", "MSFT"])
@@ -55,7 +57,7 @@ orders = [
     ('AAPL', Side.BUY, Decimal('134.20'), 120),
 ]
 for ticker, side, price, size in orders:
-    order_book.add_limit_order(ticker, side, price, size)
+    order_book.add_limit_order(ticker, side, price, size, Style.VANILLA)
 
 assert str(
     order_book.books['AAPL']
@@ -66,14 +68,16 @@ assert str(
 ) == '239.12x25,239.14x30,239.23x5 : 239.28x15,239.30x2,239.32x80'
 
 # Submit a matching order.
-order_id, fills = order_book.add_limit_order(
+order_id, fills, cancels = order_book.add_limit_order(
     'AAPL',
     Side.BUY,
     Decimal('134.79'),
-    20
+    20,
+    Style.VANILLA
 )
 assert len(fills) == 1
 assert fills == [
     Fill(8, 3, Decimal('134.79'), 20)
 ]
+assert not cancels
 ```
