@@ -29,9 +29,9 @@ class LimitOrder:
             size (int): The order size.
         """
         self._order_id = order_id
-        self._side = side  # The size is mutable.
+        self._side = side
         self._price = price
-        self.size = size
+        self.size = size  # The size is mutable.
 
     @property
     def order_id(self) -> int:
