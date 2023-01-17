@@ -55,12 +55,8 @@ class OrderBook:
             Tuple[int, List[Fill]]: The order id and any fills that were
             generated.
         """
-        # Make the limit order.
         order = self._create_order(side, price, size)
-        self._orders[order.order_id] = order
-
         aggregate_order_side = self._get_side(order.side)
-
         aggregate_order_side.add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
@@ -79,11 +75,8 @@ class OrderBook:
         """
         assert size > 0, "size must be greater than 0"
 
-        # Find the order.
-        order = self._orders[order_id]
-
+        order = self._find_order(order_id)
         aggregate_order_side = self._get_side(order.side)
-
         aggregate_order_side.amend_limit_order(order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
@@ -95,13 +88,10 @@ class OrderBook:
         Raises:
             ValueError: If the order cannot be found.
         """
-        order = self._orders[order_id]
-
+        order = self._find_order(order_id)
         aggregate_order_side = self._get_side(order.side)
-
         aggregate_order_side.cancel_limit_order(order)
-
-        del self._orders[order_id]
+        self._delete_order(order)
 
     def _get_side(self, side: Side) -> AggregateOrderSide:
         return self._bids if side == Side.BUY else self._offers
@@ -172,8 +162,12 @@ class OrderBook:
             size: int
     ) -> LimitOrder:
         order = LimitOrder(self._next_order_id, side, price, size)
+        self._orders[order.order_id] = order
         self._next_order_id += 1
         return order
+
+    def _find_order(self, order_id: int) -> LimitOrder:
+        return self._orders[order_id]
 
     def __eq__(self, other: object) -> bool:
         return (
@@ -181,6 +175,9 @@ class OrderBook:
             self._bids == other._bids and
             self._offers == other._offers
         )
+
+    def _delete_order(self, order: LimitOrder) -> None:
+        del self._orders[order.order_id]
 
     def __repr__(self) -> str:
         return f"OrderBook({self._bids}, {self._offers})"
