@@ -1,6 +1,6 @@
 # jetblack-order-book
 
-This is a demonstration of an algorithm for a time weighted limit order book
+This is a demonstration implementation of an algorithm for a time weighted limit order book
 written in Python.
 
 A limit order is an order that can be filled at a given price.
