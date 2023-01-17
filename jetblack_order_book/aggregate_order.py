@@ -67,12 +67,6 @@ class AggregateOrder:
     def __len__(self) -> int:
         return len(self._orders)
 
-    def __getitem__(self, index: int) -> LimitOrder:
-        return self._orders[index]
-
-    def __delitem__(self, index: int) -> None:
-        del self._orders[index]
-
     def __contains__(self, order_id: int) -> bool:
         return contains(self._orders, lambda x: x.order_id == order_id)
 
