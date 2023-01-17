@@ -17,15 +17,6 @@ class AggregateOrderSide:
         self.side = side
         self._orders: Deque[AggregateOrder] = deque()
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            all(a == b for a, b in zip(self._orders, other._orders))
-        )
-
-    def __bool__(self) -> bool:
-        return bool(self._orders)
-
     def orders(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
         """Return the orders for the side.
 
@@ -124,3 +115,12 @@ class AggregateOrderSide:
             # If there are no orders left at this price level, delete the
             # aggregate order.
             del self._orders[index]
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, type(self)) and
+            all(a == b for a, b in zip(self._orders, other._orders))
+        )
+
+    def __bool__(self) -> bool:
+        return bool(self._orders)

@@ -5,6 +5,7 @@ from typing import NamedTuple
 
 
 class Fill(NamedTuple):
+    """A fill"""
     buy_order_id: int
     sell_order_id: int
     price: Decimal

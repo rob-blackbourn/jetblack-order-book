@@ -43,33 +43,6 @@ class AggregateOrder:
         """The aggregate size of the order."""
         return sum(order.size for order in self._orders)
 
-    def __repr__(self) -> str:
-        return f"AggregateOrder({self._orders})"
-
-    def __str__(self) -> str:
-        return f"{self.price}x{self.size}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, type(self)) and
-            self.price == other.price and
-            self.size == other.size
-        )
-
-    def __bool__(self) -> bool:
-        """Check if there are any orders in the aggregate order.
-
-        Returns:
-            bool: Returns true if the aggregate order contains orders.
-        """
-        return len(self._orders) != 0
-
-    def __len__(self) -> int:
-        return len(self._orders)
-
-    def __contains__(self, order_id: int) -> bool:
-        return contains(self._orders, lambda x: x.order_id == order_id)
-
     @property
     def first(self) -> LimitOrder:
         """The first order to process."""
@@ -129,3 +102,30 @@ class AggregateOrder:
             raise KeyError("order not found")
 
         del self._orders[index]
+
+    def __repr__(self) -> str:
+        return f"AggregateOrder({self._orders})"
+
+    def __str__(self) -> str:
+        return f"{self.price}x{self.size}"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, type(self)) and
+            self.price == other.price and
+            self.size == other.size
+        )
+
+    def __bool__(self) -> bool:
+        """Check if there are any orders in the aggregate order.
+
+        Returns:
+            bool: Returns true if the aggregate order contains orders.
+        """
+        return len(self._orders) != 0
+
+    def __len__(self) -> int:
+        return len(self._orders)
+
+    def __contains__(self, order_id: int) -> bool:
+        return contains(self._orders, lambda x: x.order_id == order_id)
