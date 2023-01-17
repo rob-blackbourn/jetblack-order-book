@@ -19,8 +19,10 @@ class OrderBook:
             self,
     ) -> None:
         self._orders: Dict[int, LimitOrder] = {}
-        self._bids = AggregateOrderSide(Side.BUY)
-        self._offers = AggregateOrderSide(Side.SELL)
+        self._sides = {
+            Side.BUY: AggregateOrderSide(Side.BUY),
+            Side.SELL: AggregateOrderSide(Side.SELL)
+        }
         self._next_order_id = 1
 
     def book_depth(
@@ -56,8 +58,7 @@ class OrderBook:
             generated.
         """
         order = self._create_order(side, price, size)
-        aggregate_order_side = self._get_side(order.side)
-        aggregate_order_side.add_limit_order(order)
+        self._sides[order.side].add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
         # order that instigated the changes is supplied.
@@ -76,8 +77,7 @@ class OrderBook:
         assert size > 0, "size must be greater than 0"
 
         order = self._find_order(order_id)
-        aggregate_order_side = self._get_side(order.side)
-        aggregate_order_side.amend_limit_order(order, size)
+        self._sides[order.side].amend_limit_order(order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
         """Cancel a limit order.
@@ -89,12 +89,16 @@ class OrderBook:
             ValueError: If the order cannot be found.
         """
         order = self._find_order(order_id)
-        aggregate_order_side = self._get_side(order.side)
-        aggregate_order_side.cancel_limit_order(order)
+        self._sides[order.side].cancel_limit_order(order)
         self._delete_order(order)
 
-    def _get_side(self, side: Side) -> AggregateOrderSide:
-        return self._bids if side == Side.BUY else self._offers
+    @property
+    def _bids(self) -> AggregateOrderSide:
+        return self._sides[Side.BUY]
+
+    @property
+    def _offers(self) -> AggregateOrderSide:
+        return self._sides[Side.SELL]
 
     def _match(self, aggressor_order_id: int) -> List[Fill]:
         """Match bids against offers generating fills.
