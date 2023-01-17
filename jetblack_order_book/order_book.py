@@ -18,10 +18,9 @@ class OrderBook:
     def __init__(
             self,
     ) -> None:
-        self.orders: Dict[int, LimitOrder] = {}
-        # bids and offers are ordered from low to high.
-        self.bids = AggregateOrderSide(Side.BUY)
-        self.offers = AggregateOrderSide(Side.SELL)
+        self._orders: Dict[int, LimitOrder] = {}
+        self._bids = AggregateOrderSide(Side.BUY)
+        self._offers = AggregateOrderSide(Side.SELL)
         self._next_order_id = 1
 
     def book_depth(
@@ -37,7 +36,7 @@ class OrderBook:
             Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]: The best
                 bids and offers.
         """
-        return self.bids.orders(levels), self.offers.orders(levels)
+        return self._bids.orders(levels), self._offers.orders(levels)
 
     def add_limit_order(
             self,
@@ -58,13 +57,9 @@ class OrderBook:
         """
         # Make the limit order.
         order = self._create_order(side, price, size)
-        self.orders[order.order_id] = order
+        self._orders[order.order_id] = order
 
-        # Get the orders for the side.
-        aggregate_order_side = (
-            self.bids if side == Side.BUY
-            else self.offers
-        )
+        aggregate_order_side = self._get_side(order.side)
 
         aggregate_order_side.add_limit_order(order)
 
@@ -85,13 +80,9 @@ class OrderBook:
         assert size > 0, "size must be greater than 0"
 
         # Find the order.
-        order = self.orders[order_id]
+        order = self._orders[order_id]
 
-        # Get the aggregate orders in which the order exists.
-        aggregate_order_side = (
-            self.bids if order.side == Side.BUY
-            else self.offers
-        )
+        aggregate_order_side = self._get_side(order.side)
 
         aggregate_order_side.amend_limit_order(order, size)
 
@@ -104,16 +95,16 @@ class OrderBook:
         Raises:
             ValueError: If the order cannot be found.
         """
-        order = self.orders[order_id]
+        order = self._orders[order_id]
 
-        aggregate_order_side = (
-            self.bids if order.side == Side.BUY
-            else self.offers
-        )
+        aggregate_order_side = self._get_side(order.side)
 
         aggregate_order_side.cancel_limit_order(order)
 
-        del self.orders[order_id]
+        del self._orders[order_id]
+
+    def _get_side(self, side: Side) -> AggregateOrderSide:
+        return self._bids if side == Side.BUY else self._offers
 
     def _match(self, aggressor_order_id: int) -> List[Fill]:
         """Match bids against offers generating fills.
@@ -126,28 +117,28 @@ class OrderBook:
         """
         fills: List[Fill] = []
         while (
-                self.bids and
-                self.offers and
-                self.bids.best.price >= self.offers.best.price
+                self._bids and
+                self._offers and
+                self._bids.best.price >= self._offers.best.price
         ):
-            while self.bids.best and self.offers.best:
+            while self._bids.best and self._offers.best:
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
                 # the best opposing price.
                 trade_size = min(
-                    self.bids.best.first.size,
-                    self.offers.best.first.size
+                    self._bids.best.first.size,
+                    self._offers.best.first.size
                 )
                 trade_price = (
-                    self.bids.best.first.price
-                    if self.bids.best.first.order_id == aggressor_order_id
-                    else self.offers.best.first.price
+                    self._bids.best.first.price
+                    if self._bids.best.first.order_id == aggressor_order_id
+                    else self._offers.best.first.price
                 )
 
                 fills.append(
                     Fill(
-                        self.bids.best.first.order_id,
-                        self.offers.best.first.order_id,
+                        self._bids.best.first.order_id,
+                        self._offers.best.first.order_id,
                         trade_price,
                         trade_size)
                 )
@@ -155,22 +146,22 @@ class OrderBook:
                 # Decrement the orders by the trade size, then check if the
                 # orders have been completely executed.
 
-                self.bids.best.first.size -= trade_size
-                if self.bids.best.first.size == 0:
-                    del self.orders[self.bids.best.first.order_id]
-                    self.bids.best.delete_first()
+                self._bids.best.first.size -= trade_size
+                if self._bids.best.first.size == 0:
+                    del self._orders[self._bids.best.first.order_id]
+                    self._bids.best.delete_first()
 
-                self.offers.best.first.size -= trade_size
-                if self.offers.best.first.size == 0:
-                    del self.orders[self.offers.best.first.order_id]
-                    self.offers.best.delete_first()
+                self._offers.best.first.size -= trade_size
+                if self._offers.best.first.size == 0:
+                    del self._orders[self._offers.best.first.order_id]
+                    self._offers.best.delete_first()
 
             # if all orders have been executed at this price level remove the
             # price level.
-            if not self.bids.best:
-                self.bids.delete_best()
-            if not self.offers.best:
-                self.offers.delete_best()
+            if not self._bids.best:
+                self._bids.delete_best()
+            if not self._offers.best:
+                self._offers.delete_best()
 
         return fills
 
@@ -187,12 +178,12 @@ class OrderBook:
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            self.bids == other.bids and
-            self.offers == other.offers
+            self._bids == other._bids and
+            self._offers == other._offers
         )
 
     def __repr__(self) -> str:
-        return f"OrderBook({self.bids}, {self.offers})"
+        return f"OrderBook({self._bids}, {self._offers})"
 
     def __str__(self) -> str:
         return format(self, "")
