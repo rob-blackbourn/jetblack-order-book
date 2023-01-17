@@ -8,8 +8,8 @@ from typing import List, Optional, Sequence, Tuple
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
+from .limit_order import Side
 from .order_repo import OrderRepo
-from .side import Side
 
 
 class OrderBook:

@@ -5,9 +5,8 @@ from itertools import islice
 from typing import Deque, Sequence, Optional
 
 from .aggregate_order import AggregateOrder
-from .limit_order import LimitOrder
+from .limit_order import LimitOrder, Side
 from .utils import index_of
-from .side import Side
 
 
 class AggregateOrderSide:

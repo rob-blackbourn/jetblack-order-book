@@ -3,8 +3,7 @@
 from decimal import Decimal
 from typing import Dict
 
-from .limit_order import LimitOrder
-from .side import Side
+from .limit_order import LimitOrder, Side
 
 
 class OrderRepo:

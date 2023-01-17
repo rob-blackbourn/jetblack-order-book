@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from enum import IntEnum
 
-from .side import Side
+
+class Side(IntEnum):
+    """The order side"""
+
+    BUY = 1
+    SELL = -1
 
 
 class LimitOrder:

@@ -4,8 +4,8 @@ from decimal import Decimal
 from typing import Dict, Iterable, List, Tuple
 
 from .fill import Fill
+from .limit_order import Side
 from .order_book import OrderBook
-from .side import Side
 
 
 class ExchangeOrderBook:
