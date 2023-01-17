@@ -1,6 +1,6 @@
 # jetblack-order-book
 
-This is a demonstration implementation of an algorithm for a time weighted limit order book
+This is a demonstration implementation of an algorithm for a time weighted, limit order book
 written in Python.
 
 A limit order is an order that can be filled at a given price.
@@ -12,11 +12,11 @@ The orders are "time weighted", in that older orders are executed before newer o
 At the base layer there is a `LimitOrder` which holds the `order_id`, `side`, `price` and `size` of an order.
 
 As multiple orders can be placed at the same price, each price holds an `AggregateOrder` which contains a queue of all the individual orders.
-As the orders are executed in the sequence in which they were placed (FIFO), new orders are appended to the back of the queue,
-and order to execute are taken from the front of the queue.
+Since the orders are executed in the sequence in which they were placed (FIFO), new orders are appended to the back of the queue,
+while orders to execute are taken from the front of the queue.
 
-The aggregated orders are arranged by price by the `AggregatedOrderSide` class.
-This arranges the aggregated orders by price ascending, so the best bid is the last
+The aggregated orders are arranged by price with the `AggregatedOrderSide` class.
+This arranges the aggregate orders by price ascending, so the best bid is the last
 aggregated order, and the best offer is the first aggregated order.
 
 The aggregated order sides are brought together in the `OrderBook`, which manages
