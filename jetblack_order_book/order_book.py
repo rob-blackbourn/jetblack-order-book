@@ -57,6 +57,16 @@ class OrderBook:
             self.offers == other.offers
         )
 
+    def _create_order(
+            self,
+            side: Side,
+            price: Decimal,
+            size: int
+    ) -> LimitOrder:
+        order = LimitOrder(self._next_order_id, side, price, size)
+        self._next_order_id += 1
+        return order
+
     def add_limit_order(
             self,
             side: Side,
@@ -75,17 +85,16 @@ class OrderBook:
             generated.
         """
         # Make the limit order.
-        order = LimitOrder(self._next_order_id, side, price, size)
+        order = self._create_order(side, price, size)
         self.orders[order.order_id] = order
-        self._next_order_id += 1
 
         # Get the orders for the side.
-        aggregate_orders_for_side = (
+        aggregate_order_side = (
             self.bids if side == Side.BUY
             else self.offers
         )
 
-        aggregate_orders_for_side.add_limit_order(order)
+        aggregate_order_side.add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
         # order that instigated the changes is supplied.
@@ -155,15 +164,15 @@ class OrderBook:
         assert size > 0, "size must be greater than 0"
 
         # Find the order.
-        existing_order = self.orders[order_id]
+        order = self.orders[order_id]
 
         # Get the aggregate orders in which the order exists.
-        aggregate_orders_for_side = (
-            self.bids if existing_order.side == Side.BUY
+        aggregate_order_side = (
+            self.bids if order.side == Side.BUY
             else self.offers
         )
 
-        aggregate_orders_for_side.amend_limit_order(existing_order, size)
+        aggregate_order_side.amend_limit_order(order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
         """Cancel a limit order.
@@ -174,13 +183,13 @@ class OrderBook:
         Raises:
             ValueError: If the order cannot be found.
         """
-        existing_order = self.orders[order_id]
+        order = self.orders[order_id]
 
-        aggregate_orders_for_side = (
-            self.bids if existing_order.side == Side.BUY
+        aggregate_order_side = (
+            self.bids if order.side == Side.BUY
             else self.offers
         )
 
-        aggregate_orders_for_side.cancel_limit_order(existing_order)
+        aggregate_order_side.cancel_limit_order(order)
 
         del self.orders[order_id]
