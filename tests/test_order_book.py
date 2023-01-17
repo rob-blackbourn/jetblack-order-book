@@ -65,7 +65,7 @@ def test_order_time_order():
     """
     order_book = OrderBook()
 
-    assert str(order_book) == ' : '
+    assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
     buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
@@ -79,9 +79,9 @@ def test_order_time_order():
     assert fills == [
         Fill(buy1, sell, Decimal('10.5'), 10),
         Fill(buy2, sell, Decimal('10.5'), 5),
-    ]
+    ], "the fills should have been made in the order they were placed"
 
-    assert str(order_book) == ' : 10.5x5'
+    assert str(order_book) == ' : 10.5x5', "all buys should have been matched"
 
 
 def test_order_cross():
@@ -127,10 +127,13 @@ def test_order_book_amend_size():
     ) == '10.5x10 : 10.6x5', "the order book should show the change in size"
 
 
-def test_order_book_cancel_order():
+def test_cancel_order():
+    """
+    An order can be cancelled.
+    """
     order_book = OrderBook()
 
-    assert str(order_book) == ' : '
+    assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
     order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
@@ -139,9 +142,54 @@ def test_order_book_cancel_order():
 
     assert str(
         order_book
-    ) == '10.5x10 : 10.6x15'
+    ) == '10.5x10 : 10.6x15', "the order book should represent the orders"
 
     order_book.cancel_limit_order(sell2)
     assert str(
         order_book
-    ) == '10.5x10 : 10.6x10'
+    ) == '10.5x10 : 10.6x10', "The order should be removed from the order book"
+
+
+def test_format():
+    """Test for formatting"""
+    order_book = OrderBook()
+
+    assert str(order_book) == ' : ', "the order book should be empty"
+
+    # Add 3 buys and 2 sells at distinct price levels.
+    order_book.add_limit_order(Side.BUY, Decimal('10.1'), 5)
+    order_book.add_limit_order(Side.BUY, Decimal('10.2'), 5)
+    order_book.add_limit_order(Side.BUY, Decimal('10.3'), 5)
+
+    order_book.add_limit_order(Side.SELL, Decimal('11.1'), 5)
+    order_book.add_limit_order(Side.SELL, Decimal('11.2'), 5)
+
+    assert str(
+        order_book
+    ) == '10.1x5,10.2x5,10.3x5 : 11.1x5,11.2x5', "the order book represent the orders"
+
+    assert format(
+        order_book,
+        "4"
+    ) == '10.1x5,10.2x5,10.3x5 : 11.1x5,11.2x5', "show all orders if the length exceeds the orders"
+
+    assert format(
+        order_book,
+        "3"
+    ) == '10.1x5,10.2x5,10.3x5 : 11.1x5,11.2x5', "show all orders if the length matches the orders"
+
+    assert format(
+        order_book,
+        "2"
+    ) == '10.2x5,10.3x5 : 11.1x5,11.2x5', "show two orders per side"
+
+    assert format(
+        order_book,
+        "1"
+    ) == '10.3x5 : 11.1x5', "show one order per side"
+
+    try:
+        format(order_book, "0")
+        assert False, "format length should be greater than 0"
+    except:
+        assert True, "Format should be less than 0"

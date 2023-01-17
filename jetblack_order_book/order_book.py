@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from decimal import Decimal
 from itertools import islice
-from typing import Deque, Dict, List, Tuple
+from typing import Deque, Dict, List, Optional, Sequence, Tuple
 
 from .aggregate_order import AggregateOrder
 from .fill import Fill
@@ -33,16 +33,36 @@ class OrderBook:
 
     def __format__(self, format_spec: str) -> str:
         levels = None if not format_spec else int(format_spec)
-        # pylint: disable=invalid-unary-operand-type
-        bids = self.bids if levels is None else tuple(
-            islice(self.bids, len(self.bids) - levels, len(self.bids))
-        )
-        offers = self.offers if levels is None else islice(
-            self.offers,
-            0,
-            levels
-        )
+        assert levels is None or levels > 0, 'levels should be > 0'
+        bids, offers = self.best(levels)
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
+
+    def _get_bids(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+        if levels is None:
+            return self.bids
+        levels = min(levels, len(self.bids))
+        return tuple(islice(self.bids, len(self.bids) - levels, len(self.bids)))
+
+    def _get_offers(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+        if levels is None:
+            return self.offers
+        levels = min(levels, len(self.offers))
+        return tuple(islice(self.offers, 0, levels))
+
+    def best(
+            self,
+            levels: Optional[int]
+    ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
+        """The best bids and offers.
+
+        Args:
+            levels (Optional[int]): An optional book depth.
+
+        Returns:
+            Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]: The best
+                bids and offers.
+        """
+        return self._get_bids(levels), self._get_offers(levels)
 
     def __eq__(self, other: object) -> bool:
         return (
