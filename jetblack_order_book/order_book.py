@@ -8,7 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .order_manager import OrderManager
+from .order_repo import OrderRepo
 from .order_types import Side
 
 
@@ -18,7 +18,7 @@ class OrderBook:
     def __init__(
             self,
     ) -> None:
-        self._orders = OrderManager()
+        self._orders = OrderRepo()
         self._sides = {
             Side.BUY: AggregateOrderSide(Side.BUY),
             Side.SELL: AggregateOrderSide(Side.SELL)

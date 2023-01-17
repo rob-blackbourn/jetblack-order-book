@@ -7,7 +7,7 @@ from .limit_order import LimitOrder
 from .order_types import Side
 
 
-class OrderManager:
+class OrderRepo:
     """An order manager"""
 
     def __init__(self) -> None:
