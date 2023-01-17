@@ -25,6 +25,16 @@ class OrderBook:
         }
         self._next_order_id = 1
 
+    @property
+    def bids(self) -> AggregateOrderSide:
+        """The bids"""
+        return self._sides[Side.BUY]
+
+    @property
+    def offers(self) -> AggregateOrderSide:
+        """The offers"""
+        return self._sides[Side.SELL]
+
     def book_depth(
             self,
             levels: Optional[int]
@@ -38,7 +48,7 @@ class OrderBook:
             Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]: The best
                 bids and offers.
         """
-        return self._bids.orders(levels), self._offers.orders(levels)
+        return self.bids.orders(levels), self.offers.orders(levels)
 
     def add_limit_order(
             self,
@@ -92,14 +102,6 @@ class OrderBook:
         self._sides[order.side].cancel_limit_order(order)
         self._delete_order(order)
 
-    @property
-    def _bids(self) -> AggregateOrderSide:
-        return self._sides[Side.BUY]
-
-    @property
-    def _offers(self) -> AggregateOrderSide:
-        return self._sides[Side.SELL]
-
     def _match(self, aggressor_order_id: int) -> List[Fill]:
         """Match bids against offers generating fills.
 
@@ -111,28 +113,28 @@ class OrderBook:
         """
         fills: List[Fill] = []
         while (
-                self._bids and
-                self._offers and
-                self._bids.best.price >= self._offers.best.price
+                self.bids and
+                self.offers and
+                self.bids.best.price >= self.offers.best.price
         ):
-            while self._bids.best and self._offers.best:
+            while self.bids.best and self.offers.best:
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
                 # the best opposing price.
                 trade_size = min(
-                    self._bids.best.first.size,
-                    self._offers.best.first.size
+                    self.bids.best.first.size,
+                    self.offers.best.first.size
                 )
                 trade_price = (
-                    self._bids.best.first.price
-                    if self._bids.best.first.order_id == aggressor_order_id
-                    else self._offers.best.first.price
+                    self.bids.best.first.price
+                    if self.bids.best.first.order_id == aggressor_order_id
+                    else self.offers.best.first.price
                 )
 
                 fills.append(
                     Fill(
-                        self._bids.best.first.order_id,
-                        self._offers.best.first.order_id,
+                        self.bids.best.first.order_id,
+                        self.offers.best.first.order_id,
                         trade_price,
                         trade_size)
                 )
@@ -140,22 +142,22 @@ class OrderBook:
                 # Decrement the orders by the trade size, then check if the
                 # orders have been completely executed.
 
-                self._bids.best.first.size -= trade_size
-                if self._bids.best.first.size == 0:
-                    del self._orders[self._bids.best.first.order_id]
-                    self._bids.best.delete_first()
+                self.bids.best.first.size -= trade_size
+                if self.bids.best.first.size == 0:
+                    self._delete_order(self.bids.best.first)
+                    self.bids.best.delete_first()
 
-                self._offers.best.first.size -= trade_size
-                if self._offers.best.first.size == 0:
-                    del self._orders[self._offers.best.first.order_id]
-                    self._offers.best.delete_first()
+                self.offers.best.first.size -= trade_size
+                if self.offers.best.first.size == 0:
+                    self._delete_order(self.offers.best.first)
+                    self.offers.best.delete_first()
 
             # if all orders have been executed at this price level remove the
             # price level.
-            if not self._bids.best:
-                self._bids.delete_best()
-            if not self._offers.best:
-                self._offers.delete_best()
+            if not self.bids.best:
+                self.bids.delete_best()
+            if not self.offers.best:
+                self.offers.delete_best()
 
         return fills
 
@@ -176,15 +178,15 @@ class OrderBook:
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            self._bids == other._bids and
-            self._offers == other._offers
+            self.bids == other.bids and
+            self.offers == other.offers
         )
 
     def _delete_order(self, order: LimitOrder) -> None:
         del self._orders[order.order_id]
 
     def __repr__(self) -> str:
-        return f"OrderBook({self._bids}, {self._offers})"
+        return f"OrderBook({self.bids}, {self.offers})"
 
     def __str__(self) -> str:
         return format(self, "")
