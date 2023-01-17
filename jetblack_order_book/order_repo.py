@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Dict
 
 from .limit_order import LimitOrder
-from .order_types import Side
+from .side import Side
 
 
 class OrderRepo:

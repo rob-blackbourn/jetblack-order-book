@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from decimal import Decimal
 
-from .linq import contains, index_of
+from .utils import index_of
 from .limit_order import LimitOrder
 
 
@@ -128,4 +128,4 @@ class AggregateOrder:
         return len(self._orders)
 
     def __contains__(self, order_id: int) -> bool:
-        return contains(self._orders, lambda x: x.order_id == order_id)
+        return any(x.order_id == order_id for x in self._orders)

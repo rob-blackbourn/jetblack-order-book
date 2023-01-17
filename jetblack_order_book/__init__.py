@@ -7,7 +7,7 @@ from .fill import Fill
 from .limit_order import LimitOrder
 from .order_book import OrderBook
 from .order_repo import OrderRepo
-from .order_types import Side
+from .side import Side
 
 __all__ = [
     'AggregateOrder',

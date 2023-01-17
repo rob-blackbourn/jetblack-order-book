@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from .order_types import Side
+from .side import Side
 
 
 class LimitOrder:

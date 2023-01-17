@@ -9,7 +9,7 @@ from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .order_repo import OrderRepo
-from .order_types import Side
+from .side import Side
 
 
 class OrderBook:

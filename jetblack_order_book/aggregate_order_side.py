@@ -6,8 +6,8 @@ from typing import Deque, Sequence, Optional
 
 from .aggregate_order import AggregateOrder
 from .limit_order import LimitOrder
-from .linq import index_of
-from .order_types import Side
+from .utils import index_of
+from .side import Side
 
 
 class AggregateOrderSide:

@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List, Tuple
 
 from .fill import Fill
 from .order_book import OrderBook
-from .order_types import Side
+from .side import Side
 
 
 class ExchangeOrderBook:
