@@ -14,8 +14,17 @@ class AggregateOrderSide:
     """The aggregate orders for a side"""
 
     def __init__(self, side: Side) -> None:
-        self.side = side
+        self._side = side
         self._orders: Deque[AggregateOrder] = deque()
+
+    @property
+    def side(self) -> Side:
+        """The side.
+
+        Returns:
+            Side: The side.
+        """
+        return self._side
 
     def orders(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
         """Return the orders for the side.
@@ -29,7 +38,7 @@ class AggregateOrderSide:
         if levels is None:
             return self._orders
         levels = min(levels, len(self._orders))
-        if self.side == Side.BUY:
+        if self._side == Side.BUY:
             return tuple(islice(
                 self._orders,
                 len(self._orders) - levels,
@@ -41,11 +50,11 @@ class AggregateOrderSide:
     @property
     def best(self) -> AggregateOrder:
         """Get the order at the best price level."""
-        return self._orders[-1] if self.side == Side.BUY else self._orders[0]
+        return self._orders[-1] if self._side == Side.BUY else self._orders[0]
 
     def delete_best(self) -> None:
         """Delete the order at the best price level."""
-        if self.side == Side.BUY:
+        if self._side == Side.BUY:
             del self._orders[-1]
         else:
             del self._orders[0]
