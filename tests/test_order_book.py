@@ -59,7 +59,7 @@ def test_partial_fill():
     assert str(order_book) == '10.5x5 : '
 
 
-def test_order_time_order():
+def test_time_priority():
     """
     Orders at the same price should be executed in the order they are received.
     """
@@ -84,7 +84,7 @@ def test_order_time_order():
     assert str(order_book) == ' : 10.5x5', "all buys should have been matched"
 
 
-def test_order_cross():
+def test_cross():
     """
     A cross occurs when a sell/buy order is placed at a price below/above
     the best bid/offer. In this case the price of the sell/buy is used, rather
@@ -105,7 +105,7 @@ def test_order_cross():
     assert str(order_book) == ' : ', "the order book should be empty"
 
 
-def test_order_book_amend_size():
+def test_amend_size():
     """
     The size of a limit order can be changed.
     """
@@ -191,5 +191,5 @@ def test_format():
     try:
         format(order_book, "0")
         assert False, "format length should be greater than 0"
-    except:
+    except AssertionError:
         assert True, "Format should be less than 0"
