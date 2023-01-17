@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from jetblack_order_book import ExchangeOrderBook, Side, Fill
+from jetblack_order_book import ExchangeOrderBook, Side, Fill, Style
 
 
 def test_smoke():
@@ -26,7 +26,7 @@ def test_smoke():
         ('AAPL', Side.BUY, Decimal('134.20'), 120),
     ]
     for ticker, side, price, size in orders:
-        order_book.add_limit_order(ticker, side, price, size)
+        order_book.add_limit_order(ticker, side, price, size, Style.VANILLA)
 
     assert str(
         order_book.books['AAPL']
@@ -40,7 +40,8 @@ def test_smoke():
         'AAPL',
         Side.BUY,
         Decimal('134.79'),
-        20
+        20,
+        Style.VANILLA
     )
     assert len(fills) == 1
     assert fills == [

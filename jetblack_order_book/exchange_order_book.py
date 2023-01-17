@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Dict, Iterable, List, Tuple
 
 from .fill import Fill
-from .limit_order import Side
+from .limit_order import Side, Style
 from .order_book import OrderBook
 
 
@@ -30,7 +30,8 @@ class ExchangeOrderBook:
             ticker: str,
             side: Side,
             price: Decimal,
-            size: int
+            size: int,
+            style: Style
     ) -> Tuple[int, List[Fill]]:
         """Add a limit order for a ticker.
 
@@ -39,13 +40,14 @@ class ExchangeOrderBook:
             side (Side): Buy or sell.
             price (Decimal): The price at which the order should be executed.
             size (int): The size of the order.
+            style (Style): The order style.
 
         Returns:
             Tuple[int, List[Fill]]: The id of the order and any fills that
             were generated.
         """
         order_book = self.books[ticker]
-        return order_book.add_limit_order(side, price, size)
+        return order_book.add_limit_order(side, price, size, style)
 
     def amend_limit_order(self, ticker: str, order_id: int, size: int) -> None:
         """Amend a limit order.

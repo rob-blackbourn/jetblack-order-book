@@ -8,7 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .limit_order import Side
+from .limit_order import Side, Style
 from .order_repo import OrderRepo
 
 
@@ -53,7 +53,8 @@ class OrderBook:
             self,
             side: Side,
             price: Decimal,
-            size: int
+            size: int,
+            style: Style
     ) -> Tuple[int, List[Fill]]:
         """Add a limit order to the order book.
 
@@ -66,7 +67,7 @@ class OrderBook:
             Tuple[int, List[Fill]]: The order id and any fills that were
             generated.
         """
-        order = self._orders.create(side, price, size)
+        order = self._orders.create(side, price, size, style)
         self._sides[order.side].add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
