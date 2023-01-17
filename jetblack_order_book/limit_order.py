@@ -13,6 +13,13 @@ class Side(IntEnum):
     SELL = -1
 
 
+class Style(IntEnum):
+    """The order style"""
+
+    VANILLA = 0
+    FILL_OR_KILL = 1
+
+
 class LimitOrder:
     """A limit order is an order which gets executed at a given price"""
 
@@ -21,7 +28,8 @@ class LimitOrder:
             order_id: int,
             side: Side,
             price: Decimal,
-            size: int
+            size: int,
+            style: Style
     ) -> None:
         """Initialise a limit order.
 
@@ -33,11 +41,13 @@ class LimitOrder:
             side (Side): Buy or sell.
             price (Decimal): The price at which the order can be executed.
             size (int): The order size.
+            style (Style): The order style.
         """
         self._order_id = order_id
         self._side = side
         self._price = price
         self.size = size  # The size is mutable.
+        self._style = style
 
     @property
     def order_id(self) -> int:
@@ -65,6 +75,10 @@ class LimitOrder:
             Decimal: The limit price.
         """
         return self._price
+
+    @property
+    def style(self) -> Style:
+        return self._style
 
     def __repr__(self) -> str:
         return f"LimitOrder({self._order_id}, {self._side}, {self._price}, {self.size})"

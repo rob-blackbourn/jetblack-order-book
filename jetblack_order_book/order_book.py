@@ -8,7 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .limit_order import Side
+from .limit_order import Side, Style
 from .order_repo import OrderRepo
 
 
@@ -53,8 +53,9 @@ class OrderBook:
             self,
             side: Side,
             price: Decimal,
-            size: int
-    ) -> Tuple[int, List[Fill]]:
+            size: int,
+            style: Style
+    ) -> Tuple[int, List[Fill], List[int]]:
         """Add a limit order to the order book.
 
         Args:
@@ -66,12 +67,12 @@ class OrderBook:
             Tuple[int, List[Fill]]: The order id and any fills that were
             generated.
         """
-        order = self._orders.create(side, price, size)
+        order = self._orders.create(side, price, size, style)
         self._sides[order.side].add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
         # order that instigated the changes is supplied.
-        return order.order_id, self._match(order.order_id)
+        return order.order_id, *self._match(order.order_id)
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
         """Amend the size of a limit order.
@@ -101,30 +102,43 @@ class OrderBook:
         self._sides[order.side].cancel_limit_order(order)
         self._orders.delete(order)
 
-    def _match(self, aggressor_order_id: int) -> List[Fill]:
+    def _match(self, aggressor_order_id: int) -> Tuple[List[Fill], List[int]]:
         """Match bids against offers generating fills.
 
         Args:
             aggressor_order_id (int): The order id that generated the match.
 
         Returns:
-            List[Fill]: The fills.
+            Tuple[List[Fill], List[int]: The fills and cancels.
         """
         fills: List[Fill] = []
+        cancels: List[int] = []
         while (
                 self.bids and
                 self.offers and
                 self.bids.best.price >= self.offers.best.price
         ):
             while self.bids.best and self.offers.best:
+
+                cancel_orders = self._handle_or_cancellable_order(
+                    self.bids.best,
+                    self.offers.best
+                )
+                if cancel_orders:
+                    for order in cancel_orders:
+                        cancels.append(order.first.order_id)
+                        self._orders.delete(order.first)
+                        order.delete_first()
+                    continue
+
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
                 # the best opposing price.
-                trade_size = min(
+                fill_size = min(
                     self.bids.best.first.size,
                     self.offers.best.first.size
                 )
-                trade_price = (
+                fill_price = (
                     self.bids.best.first.price
                     if self.bids.best.first.order_id == aggressor_order_id
                     else self.offers.best.first.price
@@ -134,19 +148,19 @@ class OrderBook:
                     Fill(
                         self.bids.best.first.order_id,
                         self.offers.best.first.order_id,
-                        trade_price,
-                        trade_size)
+                        fill_price,
+                        fill_size)
                 )
 
                 # Decrement the orders by the trade size, then check if the
                 # orders have been completely executed.
 
-                self.bids.best.first.size -= trade_size
+                self.bids.best.first.size -= fill_size
                 if self.bids.best.first.size == 0:
                     self._orders.delete(self.bids.best.first)
                     self.bids.best.delete_first()
 
-                self.offers.best.first.size -= trade_size
+                self.offers.best.first.size -= fill_size
                 if self.offers.best.first.size == 0:
                     self._orders.delete(self.offers.best.first)
                     self.offers.best.delete_first()
@@ -158,7 +172,19 @@ class OrderBook:
             if not self.offers.best:
                 self.offers.delete_best()
 
-        return fills
+        return fills, cancels
+
+    def _handle_or_cancellable_order(
+            self,
+            bids: AggregateOrder,
+            offers: AggregateOrder
+    ) -> List[AggregateOrder]:
+        cancels: List[AggregateOrder] = []
+        order = bids.handle_fill_or_kill(offers)
+        if order is not None:
+            cancels.append(order)
+
+        return cancels
 
     def __eq__(self, other: object) -> bool:
         return (

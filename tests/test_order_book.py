@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from jetblack_order_book import OrderBook, Fill, Side
+from jetblack_order_book import OrderBook, Fill, Side, Style
 
 
 def test_smoke():
@@ -12,20 +12,24 @@ def test_smoke():
     order_book = OrderBook()
 
     # Build up the book
-    order_book.add_limit_order(Side.BUY, Decimal('10.0'), 10)
-    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 5)
-    order_book.add_limit_order(Side.BUY, Decimal('10.0'), 20)
-    order_book.add_limit_order(Side.BUY, Decimal('9.5'), 30)
-    order_book.add_limit_order(Side.SELL, Decimal('11.5'), 15)
-    order_book.add_limit_order(Side.SELL, Decimal('11.0'), 10)
-    order_book.add_limit_order(Side.SELL, Decimal('12.0'), 20)
-    order_book.add_limit_order(Side.SELL, Decimal('13.5'), 30)
+    order_book.add_limit_order(Side.BUY, Decimal('10.0'), 10, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.0'), 20, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('9.5'), 30, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('11.5'), 15, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('11.0'), 10, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('12.0'), 20, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('13.5'), 30, Style.VANILLA)
 
     assert str(
         order_book
     ) == '9.5x30,10.0x30,10.5x5 : 11.0x10,11.5x15,12.0x20,13.5x30'
 
-    _, fills = order_book.add_limit_order(Side.SELL, Decimal('10.5'), 15)
+    _, fills, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.5'),
+        15, Style.VANILLA
+    )
     assert len(fills) == 1
     assert fills[0].size == 5
     assert str(
@@ -33,7 +37,12 @@ def test_smoke():
     ) == '9.5x30,10.0x30 : 10.5x10,11.0x10,11.5x15,12.0x20,13.5x30'
 
     # Cross the book. The price should be that of the aggressor (the buy).
-    _, fills = order_book.add_limit_order(Side.BUY, Decimal('11.0'), 25)
+    _, fills, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11.0'),
+        25,
+        Style.VANILLA
+    )
     assert len(fills) == 2
     assert all(fill.price == Decimal('11.0') for fill in fills)
     assert str(
@@ -50,8 +59,18 @@ def test_partial_fill():
 
     assert str(order_book) == ' : '
 
-    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
-    sell1, fills = order_book.add_limit_order(Side.SELL, Decimal('10.5'), 5)
+    buy1, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('10.5'),
+        10,
+        Style.VANILLA
+    )
+    sell1, fills, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.5'),
+        5,
+        Style.VANILLA
+    )
 
     assert fills == [
         Fill(buy1, sell1, Decimal('10.5'), 5)
@@ -68,12 +87,24 @@ def test_time_priority():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
-    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
-    buy2, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 5)
+    buy1, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('10.5'),
+        10,
+        Style.VANILLA
+    )
+    buy2, _, _ = order_book.add_limit_order(
+        Side.BUY, Decimal('10.5'),
+        5,
+        Style.VANILLA
+    )
 
     # Add a sell for the same price with a greater total size
-    sell, fills = order_book.add_limit_order(
-        Side.SELL, Decimal('10.5'), 20
+    sell, fills, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.5'),
+        20,
+        Style.VANILLA
     )
 
     assert fills == [
@@ -94,9 +125,24 @@ def test_cross():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    buy1, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 5)
-    buy2, _ = order_book.add_limit_order(Side.BUY, Decimal('11.0'), 10)
-    sell1, fills = order_book.add_limit_order(Side.SELL, Decimal('10.0'), 15)
+    buy1, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('10.5'),
+        5,
+        Style.VANILLA
+    )
+    buy2, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11.0'),
+        10,
+        Style.VANILLA
+    )
+    sell1, fills, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.0'),
+        15,
+        Style.VANILLA
+    )
 
     assert fills == [
         Fill(buy2, sell1, Decimal('10.0'), 10),
@@ -114,8 +160,18 @@ def test_amend_size():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    _, _ = order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
-    sell2, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
+    order_book.add_limit_order(
+        Side.BUY,
+        Decimal('10.5'),
+        10,
+        Style.VANILLA
+    )
+    sell2, _, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.6'),
+        10,
+        Style.VANILLA
+    )
 
     assert str(
         order_book
@@ -136,9 +192,14 @@ def test_cancel_order():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
-    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10)
-    order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10)
-    sell2, _ = order_book.add_limit_order(Side.SELL, Decimal('10.6'), 5)
+    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10, Style.VANILLA)
+    sell2, _, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10.6'),
+        5,
+        Style.VANILLA
+    )
 
     assert str(
         order_book
@@ -157,12 +218,12 @@ def test_format():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add 3 buys and 2 sells at distinct price levels.
-    order_book.add_limit_order(Side.BUY, Decimal('10.1'), 5)
-    order_book.add_limit_order(Side.BUY, Decimal('10.2'), 5)
-    order_book.add_limit_order(Side.BUY, Decimal('10.3'), 5)
+    order_book.add_limit_order(Side.BUY, Decimal('10.1'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.2'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.3'), 5, Style.VANILLA)
 
-    order_book.add_limit_order(Side.SELL, Decimal('11.1'), 5)
-    order_book.add_limit_order(Side.SELL, Decimal('11.2'), 5)
+    order_book.add_limit_order(Side.SELL, Decimal('11.1'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('11.2'), 5, Style.VANILLA)
 
     assert str(
         order_book
@@ -193,3 +254,135 @@ def test_format():
         assert False, "format length should be greater than 0"
     except AssertionError:
         assert True, "Format should be less than 0"
+
+
+def test_fill_of_kill_buy():
+    """Test a successful kill or fill where the order was a buy"""
+    order_book = OrderBook()
+
+    assert str(order_book) == ' : ', "the order book should be empty"
+
+    order_book.add_limit_order(Side.BUY, Decimal('10'), 5, Style.VANILLA)
+    buy_id, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11'),
+        5,
+        Style.FILL_OR_KILL
+    )
+    sell_id, fills, cancels = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('11'),
+        15,
+        Style.VANILLA
+    )
+
+    assert fills == [
+        Fill(buy_id, sell_id, Decimal('11'), 5)
+    ], "successful fill"
+    assert not cancels, "should be no cancels"
+
+    assert str(order_book) == "10x5 : 11x10"
+
+    sell_id, fills, cancels = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11'),
+        15,
+        Style.FILL_OR_KILL
+    )
+
+    assert not fills, "should be no fills"
+    assert cancels == [sell_id], "fill or kill should be cancelled"
+
+
+def test_fill_or_kill_sell():
+    """Test a successful kill or fill where the order was a sell"""
+    order_book = OrderBook()
+
+    assert str(order_book) == ' : ', "the order book should be empty"
+
+    order_book.add_limit_order(Side.SELL, Decimal('11'), 5, Style.VANILLA)
+    sell_id, _, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10'),
+        5,
+        Style.FILL_OR_KILL
+    )
+    buy_id, fills, cancels = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('10'),
+        15,
+        Style.VANILLA
+    )
+
+    assert fills == [
+        Fill(buy_id, sell_id, Decimal('10'), 5)
+    ], "successful fill"
+    assert not cancels, "there should be no cancels"
+
+    assert str(order_book) == "10x10 : 11x5"
+
+    sell_id, fills, cancels = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10'),
+        15,
+        Style.FILL_OR_KILL
+    )
+
+    assert not fills, "should not fill"
+    assert cancels == [sell_id], "should cancel order"
+
+
+def test_fill_or_kill_cancel_buy_order():
+    """Should cancel buys in time order"""
+
+    order_book = OrderBook()
+
+    buy_id1, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11'),
+        10,
+        Style.FILL_OR_KILL
+    )
+    buy_id2, _, _ = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11'),
+        10,
+        Style.FILL_OR_KILL
+    )
+    _, fills, cancels = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10'),
+        5,
+        Style.VANILLA
+    )
+
+    assert not fills, "should not fill"
+    assert cancels == [buy_id1, buy_id2], "should cancel in order"
+
+
+def test_fill_or_kill_cancel_sell_order():
+    """Should cancel sells in time order"""
+
+    order_book = OrderBook()
+
+    sell_id1, _, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10'),
+        10,
+        Style.FILL_OR_KILL
+    )
+    sell_id2, _, _ = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('10'),
+        10,
+        Style.FILL_OR_KILL
+    )
+    _, fills, cancels = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('11'),
+        5,
+        Style.VANILLA
+    )
+
+    assert not fills, "should not fill"
+    assert cancels == [sell_id1, sell_id2], "should cancel in order"

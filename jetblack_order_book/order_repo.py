@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import Dict
 
-from .limit_order import LimitOrder, Side
+from .limit_order import LimitOrder, Side, Style
 
 
 class OrderRepo:
@@ -17,7 +17,8 @@ class OrderRepo:
             self,
             side: Side,
             price: Decimal,
-            size: int
+            size: int,
+            style: Style
     ) -> LimitOrder:
         """Create a new order.
 
@@ -25,11 +26,12 @@ class OrderRepo:
             side (Side): Buy or sell.
             price (Decimal): The price.
             size (int): The size.
+            style (Style): The style.
 
         Returns:
             LimitOrder: A new limit order.
         """
-        order = LimitOrder(self._next_order_id, side, price, size)
+        order = LimitOrder(self._next_order_id, side, price, size, style)
         self._orders[order.order_id] = order
         self._next_order_id += 1
         return order
