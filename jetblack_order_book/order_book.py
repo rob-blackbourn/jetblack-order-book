@@ -8,7 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .limit_order import Side, Style
+from .limit_order import LimitOrder, Side, Style
 from .order_repo import OrderRepo
 
 
@@ -55,7 +55,7 @@ class OrderBook:
             price: Decimal,
             size: int,
             style: Style
-    ) -> Tuple[int, List[Fill], List[int]]:
+    ) -> Tuple[Optional[int], List[Fill], List[int]]:
         """Add a limit order to the order book.
 
         Args:
@@ -67,12 +67,23 @@ class OrderBook:
             Tuple[int, List[Fill]]: The order id and any fills that were
             generated.
         """
-        order = self._orders.create(side, price, size, style)
+        order, cancels = self._orders.create(
+            side,
+            price,
+            size,
+            style
+        )
+        for order_id in cancels:
+            self.cancel_limit_order(order_id)
+
+        if order is None:
+            return None, [], []
+
         self._sides[order.side].add_limit_order(order)
 
         # Return the order id and any fills that were generated. The id of the
         # order that instigated the changes is supplied.
-        return order.order_id, *self._match(order.order_id)
+        return order.order_id, *self._match(order.order_id, cancels)
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
         """Amend the size of a limit order.
@@ -102,17 +113,21 @@ class OrderBook:
         self._sides[order.side].cancel_limit_order(order)
         self._orders.delete(order)
 
-    def _match(self, aggressor_order_id: int) -> Tuple[List[Fill], List[int]]:
+    def _match(
+            self,
+            aggressor_order_id: int,
+            cancels: List[int]
+    ) -> Tuple[List[Fill], List[int]]:
         """Match bids against offers generating fills.
 
         Args:
             aggressor_order_id (int): The order id that generated the match.
+            cancels (List[int]): A list of already cancelled orders.
 
         Returns:
             Tuple[List[Fill], List[int]: The fills and cancels.
         """
         fills: List[Fill] = []
-        cancels: List[int] = []
         while (
                 self.bids and
                 self.offers and
@@ -120,16 +135,13 @@ class OrderBook:
         ):
             while self.bids.best and self.offers.best:
 
-                cancel_orders = self._handle_or_cancellable_order(
-                    self.bids.best,
-                    self.offers.best
-                )
+                # Check if any orders require cancellation.
+                cancel_orders = self._pre_fill_check()
                 if cancel_orders:
                     for order in cancel_orders:
-                        cancels.append(order.first.order_id)
-                        self._orders.delete(order.first)
-                        order.delete_first()
-                    continue
+                        cancels.append(order.order_id)
+                        self._sides[order.side].cancel_limit_order(order)
+                    break
 
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
@@ -165,24 +177,39 @@ class OrderBook:
                     self._orders.delete(self.offers.best.first)
                     self.offers.best.delete_first()
 
+            # Check if any orders require cancellation.
+            cancel_orders = self._post_match_check()
+            for order in cancel_orders:
+                cancels.append(order.order_id)
+                self._sides[order.side].cancel_limit_order(order)
+
             # if all orders have been executed at this price level remove the
             # price level.
-            if not self.bids.best:
+            if self.bids and not self.bids.best:
                 self.bids.delete_best()
-            if not self.offers.best:
+            if self.offers and not self.offers.best:
                 self.offers.delete_best()
 
         return fills, cancels
 
-    def _handle_or_cancellable_order(
-            self,
-            bids: AggregateOrder,
-            offers: AggregateOrder
-    ) -> List[AggregateOrder]:
-        cancels: List[AggregateOrder] = []
-        order = bids.handle_fill_or_kill(offers)
+    def _pre_fill_check(self) -> List[LimitOrder]:
+        cancels: List[LimitOrder] = []
+        order = self.bids.best.handle_fill_or_kill(self.offers.best)
         if order is not None:
             cancels.append(order)
+
+        return cancels
+
+    def _post_match_check(self) -> List[LimitOrder]:
+        cancels: List[LimitOrder] = []
+
+        if self.bids:
+            orders = self.bids.best.find_by_style(Style.IMMEDIATE_OR_CANCEL)
+            cancels += orders
+
+        if self.offers:
+            orders = self.offers.best.find_by_style(Style.IMMEDIATE_OR_CANCEL)
+            cancels += orders
 
         return cancels
 

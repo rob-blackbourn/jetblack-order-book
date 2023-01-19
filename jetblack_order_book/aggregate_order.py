@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 
 from .utils import index_of
 from .limit_order import LimitOrder, Style
@@ -48,6 +48,10 @@ class AggregateOrder:
     def first(self) -> LimitOrder:
         """The first order to process."""
         return self._orders[0]
+
+    @property
+    def orders(self) -> List[LimitOrder]:
+        return list(self._orders)
 
     def delete_first(self) -> None:
         """Delete the first order"""
@@ -107,7 +111,7 @@ class AggregateOrder:
     def handle_fill_or_kill(
             self,
             order: AggregateOrder
-    ) -> Optional[AggregateOrder]:
+    ) -> Optional[LimitOrder]:
         if self.first.order_id > order.first.order_id:
             # Ensure time weighted treatment.
             return order.handle_fill_or_kill(self)
@@ -116,15 +120,30 @@ class AggregateOrder:
             self.first.style == Style.FILL_OR_KILL and
             self.first.size > order.first.size
         ):
-            return self
+            return self.first
 
         if (
             order.first.style == Style.FILL_OR_KILL and
             order.first.size > self.first.size
         ):
-            return order
+            return order.first
 
         return None
+
+    def find_by_style(self, style: Style) -> List[LimitOrder]:
+        """Find orders by style.
+
+        Args:
+            style (Style): The style.
+
+        Returns:
+            List[LimitOrder]: The orders for the style.
+        """
+        return [
+            order
+            for order in self._orders
+            if order.style == style
+        ]
 
     def __eq__(self, other: object) -> bool:
         return (
