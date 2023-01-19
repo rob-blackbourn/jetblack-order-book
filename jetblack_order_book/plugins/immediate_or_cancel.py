@@ -24,7 +24,26 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         super().__init__(manager)
         self._immediate_or_cancel: Dict[Side, AggregateOrder] = {}
 
+    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
+        if style != Style.IMMEDIATE_OR_CANCEL:
+            return True
+
+        # If there are immediate and cancel orders at a better price this order
+        # is invalid.
+
+        if side not in self._immediate_or_cancel:
+            return True
+        if side == Side.BUY and price >= self._immediate_or_cancel[side].price:
+            return True
+        if side == Side.SELL and price <= self._immediate_or_cancel[side].price:
+            return True
+
+        return False
+
     def post_create(self, order: LimitOrder) -> List[int]:
+        # If this order is at a better price level than existing immediate or
+        # cancel orders, they should be cancelled.
+
         if order.style != Style.IMMEDIATE_OR_CANCEL:
             return []
 
@@ -47,25 +66,17 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         return cancels
 
     def post_delete(self, order: LimitOrder) -> None:
+        # Remove the order from the local cache.
         if (
                 order.side in self._immediate_or_cancel and
                 order.order_id in self._immediate_or_cancel[order.side]
         ):
             self._immediate_or_cancel[order.side].cancel(order.order_id)
 
-    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
-        if style != Style.IMMEDIATE_OR_CANCEL:
-            return True
-
-        if side not in self._immediate_or_cancel:
-            return True
-        if side == Side.BUY and price >= self._immediate_or_cancel[side].price:
-            return True
-        if side == Side.SELL and price <= self._immediate_or_cancel[side].price:
-            return True
-        return False
-
     def post_match(self) -> List[LimitOrder]:
+        # After a match any immediate or cancel orders at the best price level
+        # must be cancelled.
+
         cancels: List[LimitOrder] = []
 
         if self.manager.bids:
