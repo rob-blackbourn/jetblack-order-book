@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import LimitOrder, Side, Style
-from .order_repo import OrderRepo
 
 
 class OrderBook:
@@ -18,7 +17,9 @@ class OrderBook:
     def __init__(
             self,
     ) -> None:
-        self._orders = OrderRepo()
+        self._orders: Dict[int, LimitOrder] = {}
+        self._next_order_id = 1
+        self._immediate_or_cancel: Dict[Side, AggregateOrder] = {}
         self._sides = {
             Side.BUY: AggregateOrderSide(Side.BUY),
             Side.SELL: AggregateOrderSide(Side.SELL)
@@ -64,17 +65,15 @@ class OrderBook:
             size (int): The size of the order.
 
         Returns:
-            Tuple[int, List[Fill]]: The order id and any fills that were
-            generated.
+            Tuple[int, List[Fill], List[int]]: The order id, any fills that were
+            generated, and any orders that were cancelled.
         """
-        order, cancels = self._orders.create(
+        order, cancels = self._create(
             side,
             price,
             size,
             style
         )
-        for order_id in cancels:
-            self.cancel_limit_order(order_id)
 
         if order is None:
             return None, [], []
@@ -97,7 +96,7 @@ class OrderBook:
         """
         assert size > 0, "size must be greater than 0"
 
-        order = self._orders.find(order_id)
+        order = self._find(order_id)
         self._sides[order.side].amend_limit_order(order, size)
 
     def cancel_limit_order(self, order_id: int) -> None:
@@ -109,9 +108,99 @@ class OrderBook:
         Raises:
             ValueError: If the order cannot be found.
         """
-        order = self._orders.find(order_id)
+        order = self._find(order_id)
         self._sides[order.side].cancel_limit_order(order)
-        self._orders.delete(order)
+        self._delete(order)
+
+    def _create(
+            self,
+            side: Side,
+            price: Decimal,
+            size: int,
+            style: Style
+    ) -> Tuple[Optional[LimitOrder], List[int]]:
+        if not self._is_valid(side, price, style):
+            return None, []
+
+        order = LimitOrder(self._next_order_id, side, price, size, style)
+        self._orders[order.order_id] = order
+        self._next_order_id += 1
+
+        cancels: List[int] = []
+
+        if style == Style.IMMEDIATE_OR_CANCEL:
+            if side not in self._immediate_or_cancel:
+                self._immediate_or_cancel[side] = AggregateOrder(order)
+            else:
+                if price != self._immediate_or_cancel[side].price:
+                    for cancellable in self._immediate_or_cancel[side].orders:
+                        cancels.append(cancellable.order_id)
+                        self.cancel_limit_order(cancellable.order_id)
+                    self._immediate_or_cancel[side] = AggregateOrder(order)
+                else:
+                    self._immediate_or_cancel[side].append(order)
+
+        return order, cancels
+
+    def _find(self, order_id: int) -> LimitOrder:
+        return self._orders[order_id]
+
+    def _delete(self, order: LimitOrder) -> None:
+        del self._orders[order.order_id]
+        if (
+                order.side in self._immediate_or_cancel and
+                order.order_id in self._immediate_or_cancel[order.side]
+        ):
+            self._immediate_or_cancel[order.side].cancel(order.order_id)
+
+    def _is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
+        if style == Style.IMMEDIATE_OR_CANCEL:
+            return self._is_best_immediate_or_cancel(side, price)
+
+        return True
+
+    def _is_best_immediate_or_cancel(self, side: Side, price: Decimal) -> bool:
+        if side not in self._immediate_or_cancel:
+            return True
+        if side == Side.BUY and price >= self._immediate_or_cancel[side].price:
+            return True
+        if side == Side.SELL and price <= self._immediate_or_cancel[side].price:
+            return True
+        return False
+
+    def _find_cancellable_orders(self, order: LimitOrder) -> List[int]:
+        cancel_orders: List[LimitOrder] = []
+
+        cancel_orders += self._find_cancellable_immediate_or_cancel_orders(
+            order
+        )
+
+        return [cancel_order.order_id for cancel_order in cancel_orders]
+
+    def _find_cancellable_immediate_or_cancel_orders(
+            self,
+            order: LimitOrder
+    ) -> List[LimitOrder]:
+        if (
+            (
+                order.side in self._immediate_or_cancel
+            )
+            and
+            (
+                (
+                    order.size == Side.BUY and
+                    self._immediate_or_cancel[order.side].price < order.price
+                )
+                or
+                (
+                    order.size == Side.SELL and
+                    self._immediate_or_cancel[order.side].price < order.price
+                )
+            )
+        ):
+            return self._immediate_or_cancel[order.side].orders
+
+        return []
 
     def _match(
             self,
@@ -169,12 +258,12 @@ class OrderBook:
 
                 self.bids.best.first.size -= fill_size
                 if self.bids.best.first.size == 0:
-                    self._orders.delete(self.bids.best.first)
+                    self._delete(self.bids.best.first)
                     self.bids.best.delete_first()
 
                 self.offers.best.first.size -= fill_size
                 if self.offers.best.first.size == 0:
-                    self._orders.delete(self.offers.best.first)
+                    self._delete(self.offers.best.first)
                     self.offers.best.delete_first()
 
             # Check if any orders require cancellation.
