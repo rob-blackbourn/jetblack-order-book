@@ -14,7 +14,7 @@ The orders support the following styles:
   * `KILL_OR_FILL` - a limit order that should either be completely filled, or
     cancelled,
   * `IMMEDIATE_OR_CANCEL` - a limit order which must be either partially filled
-    or canceled,
+    or cancelled,
   * `BOOK_OR_CANCEL` - a limit order which must first go into the book,
     otherwise it must be cancelled.
 
