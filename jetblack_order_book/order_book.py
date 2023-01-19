@@ -126,21 +126,40 @@ class OrderBook:
         self._orders[order.order_id] = order
         self._next_order_id += 1
 
-        cancels: List[int] = []
-
-        if style == Style.IMMEDIATE_OR_CANCEL:
-            if side not in self._immediate_or_cancel:
-                self._immediate_or_cancel[side] = AggregateOrder(order)
-            else:
-                if price != self._immediate_or_cancel[side].price:
-                    for cancellable in self._immediate_or_cancel[side].orders:
-                        cancels.append(cancellable.order_id)
-                        self.cancel_limit_order(cancellable.order_id)
-                    self._immediate_or_cancel[side] = AggregateOrder(order)
-                else:
-                    self._immediate_or_cancel[side].append(order)
+        cancels = self._handle_invalidated(order)
 
         return order, cancels
+
+    def _handle_invalidated(self, order: LimitOrder) -> List[int]:
+        cancels: List[int] = []
+
+        if order.style == Style.IMMEDIATE_OR_CANCEL:
+            cancels += self._handle_invalidated_immediate_or_cancel(order)
+
+        return cancels
+
+    def _handle_invalidated_immediate_or_cancel(
+            self,
+            order: LimitOrder
+    ) -> List[int]:
+
+        if order.side not in self._immediate_or_cancel:
+            self._immediate_or_cancel[order.side] = AggregateOrder(order)
+            return []
+
+        if order.price == self._immediate_or_cancel[order.side].price:
+            self._immediate_or_cancel[order.side].append(order)
+            return []
+
+        cancels: List[int] = list(map(
+            lambda x: x.order_id,
+            self._immediate_or_cancel[order.side].orders
+        ))
+        for order_id in cancels:
+            self.cancel_limit_order(order_id)
+        self._immediate_or_cancel[order.side] = AggregateOrder(order)
+
+        return cancels
 
     def _find(self, order_id: int) -> LimitOrder:
         return self._orders[order_id]

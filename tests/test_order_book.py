@@ -300,8 +300,6 @@ def test_fill_or_kill_sell():
     """Test a successful kill or fill where the order was a sell"""
     order_book = OrderBook()
 
-    assert str(order_book) == ' : ', "the order book should be empty"
-
     order_book.add_limit_order(Side.SELL, Decimal('11'), 5, Style.VANILLA)
     sell_id, _, _ = order_book.add_limit_order(
         Side.SELL,
@@ -415,4 +413,22 @@ def test_immediate_or_cancel():
         10,
         Style.IMMEDIATE_OR_CANCEL
     )
-    assert cancels == [buy_id1, buy_id2]
+    assert buy_id3 is not None, "should generate buy order"
+    assert cancels == [
+        buy_id1,
+        buy_id2
+    ], "higher priced buy should cancel previous buys"
+
+    sell_id1, fills, cancels = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('11'),
+        5,
+        Style.IMMEDIATE_OR_CANCEL
+    )
+    assert sell_id1 is not None, "should generate sell order"
+    assert fills == [
+        Fill(buy_id3, sell_id1, Decimal('11'), 5)
+    ]
+    assert cancels == [buy_id3], "should cancel the partially unfilled buy"
+
+    assert str(order_book) == ' : ', "the order book should be empty"
