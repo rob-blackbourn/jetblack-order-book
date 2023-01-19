@@ -43,6 +43,31 @@ offer (or bid).
 Finally there is an `ExchangeOrderBook` which maintains the order books
 for a given set of tickers.
 
+### OrderBook / ExchangeOrderBook
+
+The order books have three main methods:
+
+  * `add_limit_order`
+  * `amend_limit_order`
+  * `cancel_limit_order`
+
+#### add_limit_order(side: Side, price: Decimal, size: int, style: Style) -> Tuple[Optional[int], List[Fill], List[int]]
+
+Adding a limit order produces a tuple of three values:
+
+  * An optional order id if the order could be added,
+  * A list of fills that were generated,
+  * A list of cancelled orders, if the new order generated cancellations.
+
+#### amend_limit_order(self, order_id: int, size: int) -> None:
+
+As the order book is time weighted, only the size of the order can be 
+changed, to maintain fair execution.
+
+#### cancel_limit_order(self, order_id: int) -> None
+
+An order may be cancelled.
+
 ## Plugins
 
 In an attempt to keep the core code clean, order styles are implemented as
