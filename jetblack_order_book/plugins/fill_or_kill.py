@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import List, Sequence
 
 from ..abstract_types import AbstractOrderBookManagerPlugin
-from ..limit_order import LimitOrder, Side, Style
+from ..limit_order import LimitOrder, Style
 
 
 class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
@@ -15,18 +14,6 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     @property
     def valid_styles(self) -> Sequence[Style]:
         return (Style.FILL_OR_KILL,)
-
-    def post_create(self, order: LimitOrder) -> List[int]:
-        return []
-
-    def post_delete(self, order: LimitOrder) -> None:
-        return
-
-    def is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
-        return True
-
-    def find_cancellable_orders(self, order: LimitOrder) -> List[int]:
-        return []
 
     def pre_fill_check(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
@@ -37,6 +24,3 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
             cancels.append(order)
 
         return cancels
-
-    def post_match_check(self) -> List[LimitOrder]:
-        return []

@@ -90,9 +90,6 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
         return []
 
-    def pre_fill_check(self) -> List[LimitOrder]:
-        return []
-
     def post_match_check(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 

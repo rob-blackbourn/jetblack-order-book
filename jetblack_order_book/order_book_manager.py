@@ -13,7 +13,6 @@ from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import LimitOrder, Side, Style
-from .plugins import VanillaPlugin
 
 
 class OrderBookManager(AbstractOrderBookManager):
@@ -23,8 +22,6 @@ class OrderBookManager(AbstractOrderBookManager):
             self, plugins: Sequence[Type[AbstractOrderBookManagerPlugin]]
     ) -> None:
         self._plugins = [
-            cast(AbstractOrderBookManagerPlugin, VanillaPlugin(self))
-        ] + [
             plugin(self) for plugin in plugins
         ]
 
@@ -33,6 +30,7 @@ class OrderBookManager(AbstractOrderBookManager):
             for plugin in self._plugins
             for style in plugin.valid_styles
         )
+        self._supported_styles.add(Style.VANILLA)
 
         self._orders: Dict[int, LimitOrder] = {}
         self._next_order_id = 1

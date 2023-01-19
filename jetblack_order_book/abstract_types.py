@@ -155,7 +155,6 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
             Sequence[Style]: A sequence of supported styles
         """
 
-    @abstractmethod
     def post_create(self, order: LimitOrder) -> List[int]:
         """Method to call after create.
 
@@ -165,16 +164,16 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         Returns:
             List[int]: A list of order ids invalidated by the new order.
         """
+        return []
 
-    @abstractmethod
     def post_delete(self, order: LimitOrder) -> None:
         """Method called after delete.
 
         Args:
             order (LimitOrder): The order to delete.
         """
+        return
 
-    @abstractmethod
     def is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
         """Method to check the validity of an order
 
@@ -186,8 +185,8 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         Returns:
             bool: True if the order is valid; otherwise False.
         """
+        return True
 
-    @abstractmethod
     def find_cancellable_orders(self, order: LimitOrder) -> List[int]:
         """A method to find cancellable orders
 
@@ -197,19 +196,20 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         Returns:
             List[int]: A list of order ids for cancellable orders.
         """
+        return []
 
-    @abstractmethod
     def pre_fill_check(self) -> List[LimitOrder]:
         """A method to call before filling an order.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.
         """
+        return []
 
-    @abstractmethod
     def post_match_check(self) -> List[LimitOrder]:
         """A function to call after a match.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.
         """
+        return []
