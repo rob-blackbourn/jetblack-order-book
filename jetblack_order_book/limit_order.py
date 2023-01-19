@@ -19,6 +19,7 @@ class Style(IntEnum):
     VANILLA = 0
     FILL_OR_KILL = 1
     IMMEDIATE_OR_CANCEL = 2
+    BOOK_OR_CANCEL = 3
 
 
 class LimitOrder:

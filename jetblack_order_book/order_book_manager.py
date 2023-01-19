@@ -163,7 +163,7 @@ class OrderBookManager(AbstractOrderBookManager):
             while self.bids.best and self.offers.best:
 
                 # Check if any orders require cancellation.
-                cancel_orders = self._pre_fill()
+                cancel_orders = self._pre_fill(aggressor_order_id)
                 if cancel_orders:
                     for order in cancel_orders:
                         cancels.append(order.order_id)
@@ -219,11 +219,11 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return fills, cancels
 
-    def _pre_fill(self) -> List[LimitOrder]:
+    def _pre_fill(self, aggressor_id: int) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 
         for plugin in self._plugins:
-            cancels += plugin.pre_fill()
+            cancels += plugin.pre_fill(aggressor_id)
 
         return cancels
 
