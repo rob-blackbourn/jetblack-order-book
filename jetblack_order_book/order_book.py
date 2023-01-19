@@ -126,19 +126,19 @@ class OrderBook:
         self._orders[order.order_id] = order
         self._next_order_id += 1
 
-        cancels = self._handle_invalidated(order)
+        cancels = self._post_create(order)
 
         return order, cancels
 
-    def _handle_invalidated(self, order: LimitOrder) -> List[int]:
+    def _post_create(self, order: LimitOrder) -> List[int]:
         cancels: List[int] = []
 
         if order.style == Style.IMMEDIATE_OR_CANCEL:
-            cancels += self._handle_invalidated_immediate_or_cancel(order)
+            cancels += self._post_create_immediate_or_cancel(order)
 
         return cancels
 
-    def _handle_invalidated_immediate_or_cancel(
+    def _post_create_immediate_or_cancel(
             self,
             order: LimitOrder
     ) -> List[int]:
