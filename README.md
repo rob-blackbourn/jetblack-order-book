@@ -15,6 +15,8 @@ The orders support the following styles:
     cancelled,
   * `IMMEDIATE_OR_CANCEL` - a limit order which must be either partially filled
     or canceled.
+  * `BOOK_OR_CANCEL` - a limit order which must first go into the book,
+    otherwise it must be cancelled.
 
 ## Implementation
 
