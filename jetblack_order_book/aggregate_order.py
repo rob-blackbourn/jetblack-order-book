@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from decimal import Decimal
-from typing import List, Optional
+from typing import List
 
 from .utils import index_of
 from .limit_order import LimitOrder, Style
