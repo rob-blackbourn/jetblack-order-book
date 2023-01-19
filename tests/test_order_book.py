@@ -72,7 +72,7 @@ def test_partial_fill():
         Style.VANILLA
     )
 
-    assert fills == [
+    assert buy1 is not None and sell1 is not None and fills == [
         Fill(buy1, sell1, Decimal('10.5'), 5)
     ]
     assert str(order_book) == '10.5x5 : '
@@ -107,7 +107,7 @@ def test_time_priority():
         Style.VANILLA
     )
 
-    assert fills == [
+    assert buy1 is not None and sell is not None and buy2 is not None and fills == [
         Fill(buy1, sell, Decimal('10.5'), 10),
         Fill(buy2, sell, Decimal('10.5'), 5),
     ], "the fills should have been made in the order they were placed"
@@ -144,7 +144,7 @@ def test_cross():
         Style.VANILLA
     )
 
-    assert fills == [
+    assert buy1 is not None and sell1 is not None and buy2 is not None and fills == [
         Fill(buy2, sell1, Decimal('10.0'), 10),
         Fill(buy1, sell1, Decimal('10.0'), 5),
     ], "fills should have price of the sell"
@@ -177,6 +177,7 @@ def test_amend_size():
         order_book
     ) == '10.5x10 : 10.6x10', "the order book should represent the orders"
 
+    assert sell2 is not None
     order_book.amend_limit_order(sell2, 5)
     assert str(
         order_book
@@ -205,6 +206,7 @@ def test_cancel_order():
         order_book
     ) == '10.5x10 : 10.6x15', "the order book should represent the orders"
 
+    assert sell2 is not None
     order_book.cancel_limit_order(sell2)
     assert str(
         order_book
@@ -276,7 +278,7 @@ def test_fill_of_kill_buy():
         Style.VANILLA
     )
 
-    assert fills == [
+    assert buy_id is not None and sell_id is not None and fills == [
         Fill(buy_id, sell_id, Decimal('11'), 5)
     ], "successful fill"
     assert not cancels, "should be no cancels"
@@ -314,7 +316,7 @@ def test_fill_or_kill_sell():
         Style.VANILLA
     )
 
-    assert fills == [
+    assert buy_id is not None and sell_id is not None and fills == [
         Fill(buy_id, sell_id, Decimal('10'), 5)
     ], "successful fill"
     assert not cancels, "there should be no cancels"
@@ -414,77 +416,3 @@ def test_immediate_or_cancel():
         Style.IMMEDIATE_OR_CANCEL
     )
     assert cancels == [buy_id1, buy_id2]
-
-
-def foo():
-    """Test for order style immediate or cancel"""
-
-    order_book = OrderBook()
-
-    buy_id, _, _ = order_book.add_limit_order(
-        Side.BUY,
-        Decimal('10'),
-        10,
-        Style.VANILLA
-    )
-    sell_id, fills, cancels = order_book.add_limit_order(
-        Side.SELL,
-        Decimal('10'),
-        15,
-        Style.IMMEDIATE_OR_CANCEL
-    )
-
-    assert fills == [
-        Fill(buy_id, sell_id, Decimal('10'), 10)
-    ], "should partial fill"
-    assert cancels == [sell_id], "should cancel remaining"
-    assert str(order_book) == ' : '
-
-    buy_id1, _, _ = order_book.add_limit_order(
-        Side.BUY,
-        Decimal('9'),
-        10,
-        Style.IMMEDIATE_OR_CANCEL
-    )
-    order_book.add_limit_order(
-        Side.BUY,
-        Decimal('9'),
-        5,
-        Style.VANILLA
-    )
-    buy_id2, _, _ = order_book.add_limit_order(
-        Side.BUY,
-        Decimal('10'),
-        10,
-        Style.IMMEDIATE_OR_CANCEL
-    )
-    order_book.add_limit_order(
-        Side.BUY,
-        Decimal('10'),
-        5,
-        Style.VANILLA
-    )
-    buy_id3, _, _ = order_book.add_limit_order(
-        Side.BUY,
-        Decimal('10'),
-        10,
-        Style.IMMEDIATE_OR_CANCEL
-    )
-    order_book.add_limit_order(
-        Side.BUY,
-        Decimal('10'),
-        5,
-        Style.VANILLA
-    )
-    sell_id, fills, cancels = order_book.add_limit_order(
-        Side.SELL,
-        Decimal('10'),
-        25,
-        Style.VANILLA
-    )
-    assert fills == [
-        Fill(buy_id1, sell_id, Decimal('10'), 10),
-        Fill(buy_id2, sell_id, Decimal('10'), 5),
-    ], "should fill first and partial fill second"
-    assert cancels == [buy_id2], "should cancel remaining second"
-    assert str(order_book) == '10x5 : '
