@@ -149,12 +149,13 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
     @property
     @abstractmethod
     def valid_styles(self) -> Sequence[Style]:
-        """Return the vliad styles for the plugin
+        """Return the valid styles for the plugin
 
         Returns:
             Sequence[Style]: A sequence of supported styles
         """
 
+    # pylint: disable=unused-argument
     def post_create(self, order: LimitOrder) -> List[int]:
         """Method to call after create.
 
