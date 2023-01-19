@@ -57,7 +57,7 @@ Adding a limit order produces a tuple of three values:
 
   * An optional order id if the order could be added,
   * A list of fills that were generated,
-  * A list of cancelled orders, if the new order generated cancellations.
+  * A list of cancelled orders, if the order generated cancellations.
 
 #### amend_limit_order(self, order_id: int, size: int) -> None:
 
