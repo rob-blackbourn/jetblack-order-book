@@ -403,6 +403,16 @@ def test_immediate_or_cancel_buys():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
+    buy_id, fills, cancels = order_book.add_limit_order(
+        Side.BUY,
+        Decimal('9'),
+        10,
+        Style.IMMEDIATE_OR_CANCEL
+    )
+    assert buy_id is None, "should not generate order"
+    assert not fills, "should not generate fills"
+    assert not cancels, "should not generate cancels"
+
     buy_id2, _, cancels = order_book.add_limit_order(
         Side.BUY,
         Decimal('10'),
@@ -453,6 +463,16 @@ def test_immediate_or_cancel_sells():
         Style.IMMEDIATE_OR_CANCEL
     )
     assert sell_id1 is not None, "should generate order"
+    assert not fills, "should not generate fills"
+    assert not cancels, "should not generate cancels"
+
+    sell_id, fills, cancels = order_book.add_limit_order(
+        Side.SELL,
+        Decimal('12'),
+        10,
+        Style.IMMEDIATE_OR_CANCEL
+    )
+    assert sell_id is None, "should not generate order"
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
