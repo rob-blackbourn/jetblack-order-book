@@ -8,20 +8,10 @@ from typing import List, Optional, Sequence, Tuple
 from .abstract_types import AbstractOrderBook
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
+from .constants import ALL_PLUGINS
 from .fill import Fill
 from .limit_order import Side, Style
 from .order_book_manager import OrderBookManager, PluginFactory
-from .plugins import (
-    create_book_or_cancel_plugin,
-    create_fill_or_kill_plugin,
-    create_immediate_or_cancel_plugin
-)
-
-ALL_PLUGINS = (
-    create_book_or_cancel_plugin,
-    create_fill_or_kill_plugin,
-    create_immediate_or_cancel_plugin
-)
 
 
 class OrderBook(AbstractOrderBook):

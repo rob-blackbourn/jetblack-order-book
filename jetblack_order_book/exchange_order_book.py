@@ -1,11 +1,13 @@
 """Exchange Order Book"""
 
 from decimal import Decimal
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .constants import ALL_PLUGINS
 from .fill import Fill
 from .limit_order import Side, Style
 from .order_book import OrderBook
+from .order_book_manager import PluginFactory
 
 
 class ExchangeOrderBook:
@@ -14,14 +16,20 @@ class ExchangeOrderBook:
     This maintains the order book for each ticker.
     """
 
-    def __init__(self, tickers: Iterable[str]) -> None:
+    def __init__(
+        self,
+        tickers: Iterable[str],
+            plugins: Sequence[PluginFactory] = ALL_PLUGINS
+    ) -> None:
         """Initialise the exchange order book.
 
         Args:
             tickers (Iterable[str]): The tickers for which order books are kept.
+            plugins (Sequence[PluginFactor], Optional): The plugins. Defaults to
+                ALL_PLUGINS.
         """
         self.books: Dict[str, OrderBook] = {
-            ticker: OrderBook()
+            ticker: OrderBook(plugins)
             for ticker in tickers
         }
 
@@ -32,7 +40,7 @@ class ExchangeOrderBook:
             price: Decimal,
             size: int,
             style: Style
-    ) -> Tuple[int, List[Fill], List[int]]:
+    ) -> Tuple[Optional[int], List[Fill], List[int]]:
         """Add a limit order for a ticker.
 
         Args:
@@ -43,8 +51,9 @@ class ExchangeOrderBook:
             style (Style): The order style.
 
         Returns:
-            Tuple[int, List[Fill], List[int]]: The id of the order and any fills that
-            were generated.
+            Tuple[Optional[int], List[Fill], List[int]]: The id of the order (if
+            an order could be created), any fills that were generated, and a
+            list of cancelled order ids.
         """
         order_book = self.books[ticker]
         return order_book.add_limit_order(side, price, size, style)
