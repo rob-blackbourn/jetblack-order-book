@@ -22,10 +22,19 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     def pre_fill(self) -> List[LimitOrder]:
 
         cancels: List[LimitOrder] = []
-        order = self._handle_fill_or_kill(
-            self.manager.bids.best,
-            self.manager.offers.best
-        )
+
+        # Ensure time weighted.
+        if self.manager.bids.best.first.order_id < self.manager.offers.best.first.order_id:
+            order = self._handle_fill_or_kill(
+                self.manager.bids.best,
+                self.manager.offers.best
+            )
+        else:
+            order = self._handle_fill_or_kill(
+                self.manager.offers.best,
+                self.manager.bids.best
+            )
+
         if order is not None:
             cancels.append(order)
 
@@ -33,24 +42,20 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
 
     def _handle_fill_or_kill(
             self,
-            bids: AggregateOrder,
-            offers: AggregateOrder,
+            order1: AggregateOrder,
+            order2: AggregateOrder,
     ) -> Optional[LimitOrder]:
-        if bids.first.order_id > offers.first.order_id:
-            # Ensure time weighted treatment.
-            return self._handle_fill_or_kill(offers, bids)  # pylint: disable=arguments-out-of-order
+        if (
+            order1.first.style == Style.FILL_OR_KILL and
+            order1.first.size > order2.first.size
+        ):
+            return order1.first
 
         if (
-            bids.first.style == Style.FILL_OR_KILL and
-            bids.first.size > offers.first.size
+            order2.first.style == Style.FILL_OR_KILL and
+            order2.first.size > order1.first.size
         ):
-            return bids.first
-
-        if (
-            offers.first.style == Style.FILL_OR_KILL and
-            offers.first.size > bids.first.size
-        ):
-            return offers.first
+            return order2.first
 
         return None
 
