@@ -51,6 +51,11 @@ class AggregateOrder:
 
     @property
     def orders(self) -> List[LimitOrder]:
+        """The orders as a list.
+
+        Returns:
+            List[LimitOrder]: A list of the orders.
+        """
         return list(self._orders)
 
     def delete_first(self) -> None:
@@ -125,7 +130,7 @@ class AggregateOrder:
 
     def __eq__(self, other: object) -> bool:
         return (
-            isinstance(other, type(self)) and
+            isinstance(other, AggregateOrder) and
             self.price == other.price and
             self.size == other.size
         )
