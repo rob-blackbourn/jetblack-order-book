@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Sequence, Tuple, Type, cast
+from typing import Dict, List, Optional, Sequence, Tuple, Type
 
 from .abstract_types import (
     AbstractOrderBookManager,
