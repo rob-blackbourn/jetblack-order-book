@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
 from ..abstract_types import (
     AbstractOrderBookManager,
@@ -15,6 +15,10 @@ from ..limit_order import LimitOrder, Side, Style
 
 class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
     """A plugin which handles fill mor kill orders"""
+
+    @property
+    def valid_styles(self) -> Sequence[Style]:
+        return (Style.IMMEDIATE_OR_CANCEL,)
 
     def __init__(self, manager: AbstractOrderBookManager) -> None:
         super().__init__(manager)

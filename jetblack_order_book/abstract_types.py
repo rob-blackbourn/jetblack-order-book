@@ -146,6 +146,15 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
     def __init__(self, manager: AbstractOrderBookManager) -> None:
         self.manager = manager
 
+    @property
+    @abstractmethod
+    def valid_styles(self) -> Sequence[Style]:
+        """Return the vliad styles for the plugin
+
+        Returns:
+            Sequence[Style]: A sequence of supported styles
+        """
+
     @abstractmethod
     def post_create(self, order: LimitOrder) -> List[int]:
         """Method to call after create.

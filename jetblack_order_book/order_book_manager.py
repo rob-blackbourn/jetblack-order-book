@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Sequence, Tuple, Type
+from typing import Dict, List, Optional, Sequence, Tuple, Type, cast
 
 from .abstract_types import (
     AbstractOrderBookManager,
@@ -13,6 +13,7 @@ from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import LimitOrder, Side, Style
+from .plugins import VanillaPlugin
 
 
 class OrderBookManager(AbstractOrderBookManager):
@@ -21,7 +22,17 @@ class OrderBookManager(AbstractOrderBookManager):
     def __init__(
             self, plugins: Sequence[Type[AbstractOrderBookManagerPlugin]]
     ) -> None:
-        self._plugins = [plugin(self) for plugin in plugins]
+        self._plugins = [
+            cast(AbstractOrderBookManagerPlugin, VanillaPlugin(self))
+        ] + [
+            plugin(self) for plugin in plugins
+        ]
+
+        self._supported_styles = set(
+            style
+            for plugin in self._plugins
+            for style in plugin.valid_styles
+        )
 
         self._orders: Dict[int, LimitOrder] = {}
         self._next_order_id = 1
@@ -54,6 +65,9 @@ class OrderBookManager(AbstractOrderBookManager):
             size: int,
             style: Style
     ) -> Tuple[Optional[int], List[Fill], List[int]]:
+        if style not in self._supported_styles:
+            raise ValueError('unsupported style')
+
         order, cancels = self.create(
             side,
             price,

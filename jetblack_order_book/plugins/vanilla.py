@@ -9,12 +9,12 @@ from ..abstract_types import AbstractOrderBookManagerPlugin
 from ..limit_order import LimitOrder, Side, Style
 
 
-class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
+class VanillaPlugin(AbstractOrderBookManagerPlugin):
     """A plugin which handles fill mor kill orders"""
 
     @property
     def valid_styles(self) -> Sequence[Style]:
-        return (Style.FILL_OR_KILL,)
+        return (Style.VANILLA,)
 
     def post_create(self, order: LimitOrder) -> List[int]:
         return []
@@ -29,14 +29,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
         return []
 
     def pre_fill_check(self) -> List[LimitOrder]:
-        cancels: List[LimitOrder] = []
-        order = self.manager.bids.best.handle_fill_or_kill(
-            self.manager.offers.best
-        )
-        if order is not None:
-            cancels.append(order)
-
-        return cancels
+        return []
 
     def post_match_check(self) -> List[LimitOrder]:
         return []
