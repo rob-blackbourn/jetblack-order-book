@@ -108,28 +108,6 @@ class AggregateOrder:
 
         del self._orders[index]
 
-    def handle_fill_or_kill(
-            self,
-            order: AggregateOrder
-    ) -> Optional[LimitOrder]:
-        if self.first.order_id > order.first.order_id:
-            # Ensure time weighted treatment.
-            return order.handle_fill_or_kill(self)
-
-        if (
-            self.first.style == Style.FILL_OR_KILL and
-            self.first.size > order.first.size
-        ):
-            return self.first
-
-        if (
-            order.first.style == Style.FILL_OR_KILL and
-            order.first.size > self.first.size
-        ):
-            return order.first
-
-        return None
-
     def find_by_style(self, style: Style) -> List[LimitOrder]:
         """Find orders by style.
 
