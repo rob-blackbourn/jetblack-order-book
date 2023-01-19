@@ -46,19 +46,20 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
             order1: AggregateOrder,
             order2: AggregateOrder,
     ) -> Optional[LimitOrder]:
-        if (
-            order1.first.style == Style.FILL_OR_KILL and
-            order1.first.size > order2.first.size
-        ):
+        if self._should_cancel(order1.first, order2.first):
             return order1.first
 
-        if (
-            order2.first.style == Style.FILL_OR_KILL and
-            order2.first.size > order1.first.size
-        ):
+        if self._should_cancel(order2.first, order1.first):
             return order2.first
 
         return None
+
+    def _should_cancel(self, order1: LimitOrder, order2: LimitOrder) -> bool:
+        # If this is a fill or kill order the order must be completely filled.
+        return (
+            order1.style == Style.FILL_OR_KILL and
+            order1.size > order2.size
+        )
 
 
 def create_fill_or_kill_plugin(
