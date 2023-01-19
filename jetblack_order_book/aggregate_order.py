@@ -25,7 +25,7 @@ class AggregateOrder:
 
         Args:
             order (LimitOrder): The limit order with which to start the
-            aggregate order.
+                aggregate order.
         """
         self._price = order.price
         self._orders = deque([order])
