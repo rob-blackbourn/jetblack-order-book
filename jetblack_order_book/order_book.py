@@ -12,8 +12,8 @@ from .fill import Fill
 from .limit_order import Side, Style
 from .order_book_manager import OrderBookManager
 from .plugins import (
-    FillOrKillPlugin,
-    ImmediateOrCancelPlugin
+    create_fill_or_kill_plugin,
+    create_immediate_or_cancel_plugin
 )
 
 
@@ -22,7 +22,7 @@ class OrderBook(AbstractOrderBook):
 
     def __init__(self) -> None:
         self._manager = OrderBookManager(
-            (FillOrKillPlugin, ImmediateOrCancelPlugin)
+            (create_fill_or_kill_plugin, create_immediate_or_cancel_plugin)
         )
 
     @property

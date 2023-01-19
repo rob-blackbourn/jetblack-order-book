@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Sequence, Tuple, Type
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from .abstract_types import (
     AbstractOrderBookManager,
@@ -14,12 +14,17 @@ from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import LimitOrder, Side, Style
 
+PluginFactory = Callable[
+    [AbstractOrderBookManager],
+    AbstractOrderBookManagerPlugin
+]
+
 
 class OrderBookManager(AbstractOrderBookManager):
     """An order book manager"""
 
     def __init__(
-            self, plugins: Sequence[Type[AbstractOrderBookManagerPlugin]]
+            self, plugins: Sequence[PluginFactory]
     ) -> None:
         self._plugins = [
             plugin(self) for plugin in plugins

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import List, Sequence
 
-from ..abstract_types import AbstractOrderBookManagerPlugin
+from ..abstract_types import (
+    AbstractOrderBookManager,
+    AbstractOrderBookManagerPlugin
+)
 from ..limit_order import LimitOrder, Style
 
 
@@ -24,3 +27,17 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
             cancels.append(order)
 
         return cancels
+
+
+def create_fill_or_kill_plugin(
+        manager: AbstractOrderBookManager
+) -> AbstractOrderBookManagerPlugin:
+    """Create a plugin for `Style.FILL_OR_KILL` orders.
+
+    Args:
+        manager (AbstractOrderBookManager): The order book manager.
+
+    Returns:
+        AbstractOrderBookManagerPlugin: The fill or kill plugin.
+    """
+    return FillOrKillPlugin(manager)

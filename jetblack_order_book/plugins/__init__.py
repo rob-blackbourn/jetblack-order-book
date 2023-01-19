@@ -1,9 +1,9 @@
 """Plugins"""
 
-from .fill_or_kill import FillOrKillPlugin
-from .immediate_or_cancel import ImmediateOrCancelPlugin
+from .fill_or_kill import create_fill_or_kill_plugin
+from .immediate_or_cancel import create_immediate_or_cancel_plugin
 
 __all__ = [
-    'FillOrKillPlugin',
-    'ImmediateOrCancelPlugin',
+    'create_fill_or_kill_plugin',
+    'create_immediate_or_cancel_plugin',
 ]

@@ -81,3 +81,17 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
             cancels += orders
 
         return cancels
+
+
+def create_immediate_or_cancel_plugin(
+        manager: AbstractOrderBookManager
+) -> AbstractOrderBookManagerPlugin:
+    """Create a plugin for `Style.IMMEDIATE_OR_CANCEL` orders.
+
+    Args:
+        manager (AbstractOrderBookManager): The order book manager.
+
+    Returns:
+        AbstractOrderBookManagerPlugin: A plugin for immediate or cancel orders.
+    """
+    return ImmediateOrCancelPlugin(manager)
