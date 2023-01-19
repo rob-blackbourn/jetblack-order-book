@@ -12,11 +12,16 @@ from .fill import Fill
 from .limit_order import Side, Style
 from .order_book_manager import OrderBookManager, PluginFactory
 from .plugins import (
+    create_book_or_cancel_plugin,
     create_fill_or_kill_plugin,
     create_immediate_or_cancel_plugin
 )
 
-ALL_PLUGINS = (create_fill_or_kill_plugin, create_immediate_or_cancel_plugin)
+ALL_PLUGINS = (
+    create_book_or_cancel_plugin,
+    create_fill_or_kill_plugin,
+    create_immediate_or_cancel_plugin
+)
 
 
 class OrderBook(AbstractOrderBook):
