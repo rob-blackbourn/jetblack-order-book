@@ -58,7 +58,7 @@ class AggregateOrderSide:
         else:
             del self._orders[0]
 
-    def add_limit_order(self, order: LimitOrder):
+    def add_limit_order(self, order: LimitOrder) -> None:
         """Add a limit order.
 
         Args:
@@ -79,6 +79,7 @@ class AggregateOrderSide:
         else:
             # Insert a new lowest price level
             self._orders.insert(index, AggregateOrder(order))
+    #
 
     def amend_limit_order(self, order: LimitOrder, size: int) -> None:
         """Amend a limit order.
