@@ -24,16 +24,17 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
         cancels: List[LimitOrder] = []
 
         # Ensure time weighted.
-        if self.manager.bids.best.first.order_id < self.manager.offers.best.first.order_id:
-            order = self._handle_fill_or_kill(
+        order = (
+            self._handle_fill_or_kill(
                 self.manager.bids.best,
                 self.manager.offers.best
             )
-        else:
-            order = self._handle_fill_or_kill(
+            if self.manager.bids.best.first.order_id < self.manager.offers.best.first.order_id
+            else self._handle_fill_or_kill(
                 self.manager.offers.best,
                 self.manager.bids.best
             )
+        )
 
         if order is not None:
             cancels.append(order)
