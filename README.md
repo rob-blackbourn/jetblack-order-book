@@ -1,32 +1,50 @@
 # jetblack-order-book
 
-This is a demonstration implementation of an algorithm for a time weighted, limit order book
-written in Python.
-
-The orders support style `VANILLA` and `KILL_OR_FILL`.
+This is a demonstration implementation of an algorithm for a time weighted,
+limit order book written in Python.
 
 A limit order is an order that can be filled at a given price.
 
-The orders are "time weighted", in that older orders are executed before newer orders, where the prices are the same.
+The orders are "time weighted", in that older orders are executed before newer
+orders, where the prices are the same.
+
+The orders support the following styles:
+
+  * `VANILLA` - a vanilla limit order
+  * `KILL_OR_FILL` - a limit order that should either be completely filled, or
+    cancelled,
+  * `IMMEDIATE_OR_CANCEL` - a limit order which must be either partially filled
+    or canceled.
 
 ## Implementation
 
-At the base layer there is a `LimitOrder` which holds the `order_id`, `side`, `price` and `size` of an order.
+At the base layer there is a `LimitOrder` which holds the `order_id`, `side`,
+`price` and `size` of an order.
 
-As multiple orders can be placed at the same price, each price holds an `AggregateOrder` which contains a queue of all the individual orders.
-Since the orders are executed in the sequence in which they were placed (FIFO), new orders are appended to the back of the queue,
-while orders to execute are taken from the front.
+As multiple orders can be placed at the same price, each price holds an
+`AggregateOrder` which contains a queue of all the individual orders. Since the
+orders are executed in the sequence in which they were placed (FIFO), new orders
+are appended to the back of the queue, while orders to execute are taken from
+the front.
 
 The aggregated orders are arranged by price with the `AggregateOrderSide` class.
-This arranges the aggregate orders by price ascending, so the best bid is the last
-aggregated order, and the best offer is the first aggregated order.
+This arranges the aggregate orders by price ascending, so the best bid is the
+last aggregated order, and the best offer is the first aggregated order.
 
-The aggregated order sides are brought together in the `OrderBook`, which manages
-the orders and performs *matching* to produce fills when an order matches or crosses.
-Crossing is a special case where an order for a buy (or sell) is made at a higher (or lower) price than the best offer (or bid).
+The aggregated order sides are brought together in the `OrderBook` which
+presents the client facing functionality. The `OrderBook` is a wrapper for
+`OrderBookManager`, which manages the orders and performs *matching* to produce
+fills when an order matches or crosses. Crossing is a special case where an
+order for a buy (or sell) is made at a higher (or lower) price than the best
+offer (or bid).
 
 Finally there is an `ExchangeOrderBook` which maintains the order books
 for a given set of tickers.
+
+## Plugins
+
+In an attempt to keep the core code clean, order styles are implemented as
+plugins.
 
 ## Usage
 
