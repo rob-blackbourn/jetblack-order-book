@@ -22,9 +22,15 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
         cancels: List[LimitOrder] = []
 
-        if aggressor_id == self.manager.bids.best.first.order_id:
+        if (
+                self.manager.bids.best.first.style == Style.BOOK_OR_CANCEL and
+                aggressor_id == self.manager.bids.best.first.order_id
+        ):
             cancels.append(self.manager.bids.best.first)
-        elif aggressor_id == self.manager.offers.best.first.order_id:
+        elif (
+                self.manager.offers.best.first.style == Style.BOOK_OR_CANCEL and
+                aggressor_id == self.manager.offers.best.first.order_id
+        ):
             cancels.append(self.manager.offers.best.first)
 
         return cancels
