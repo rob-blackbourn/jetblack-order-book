@@ -15,7 +15,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.FILL_OR_KILL,)
 
-    def pre_fill_check(self) -> List[LimitOrder]:
+    def pre_fill(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
         order = self.manager.bids.best.handle_fill_or_kill(
             self.manager.offers.best

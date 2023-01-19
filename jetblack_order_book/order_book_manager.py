@@ -100,7 +100,7 @@ class OrderBookManager(AbstractOrderBookManager):
             size: int,
             style: Style
     ) -> Tuple[Optional[LimitOrder], List[int]]:
-        if not self._is_valid(side, price, style):
+        if not self._pre_create(side, price, style):
             return None, []
 
         order = LimitOrder(self._next_order_id, side, price, size, style)
@@ -110,6 +110,13 @@ class OrderBookManager(AbstractOrderBookManager):
         cancels = self._post_create(order)
 
         return order, cancels
+
+    def _pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
+        for plugin in self._plugins:
+            if not plugin.pre_create(side, price, style):
+                return False
+
+        return True
 
     def _post_create(self, order: LimitOrder) -> List[int]:
         cancels: List[int] = []
@@ -129,21 +136,6 @@ class OrderBookManager(AbstractOrderBookManager):
     def _post_delete(self, order: LimitOrder) -> None:
         for plugin in self._plugins:
             plugin.post_delete(order)
-
-    def _is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
-        for plugin in self._plugins:
-            if not plugin.is_valid(side, price, style):
-                return False
-
-        return True
-
-    def _find_cancellable_orders(self, order: LimitOrder) -> List[int]:
-        cancel_orders: List[int] = []
-
-        for plugin in self._plugins:
-            cancel_orders += plugin.find_cancellable_orders(order)
-
-        return cancel_orders
 
     def _match(
             self,
@@ -168,7 +160,7 @@ class OrderBookManager(AbstractOrderBookManager):
             while self.bids.best and self.offers.best:
 
                 # Check if any orders require cancellation.
-                cancel_orders = self._pre_fill_check()
+                cancel_orders = self._pre_fill()
                 if cancel_orders:
                     for order in cancel_orders:
                         cancels.append(order.order_id)
@@ -210,7 +202,7 @@ class OrderBookManager(AbstractOrderBookManager):
                     self.offers.best.delete_first()
 
             # Check if any orders require cancellation.
-            cancel_orders = self._post_match_check()
+            cancel_orders = self._post_match()
             for order in cancel_orders:
                 cancels.append(order.order_id)
                 self.side(order.side).cancel_limit_order(order)
@@ -224,19 +216,19 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return fills, cancels
 
-    def _pre_fill_check(self) -> List[LimitOrder]:
+    def _pre_fill(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 
         for plugin in self._plugins:
-            cancels += plugin.pre_fill_check()
+            cancels += plugin.pre_fill()
 
         return cancels
 
-    def _post_match_check(self) -> List[LimitOrder]:
+    def _post_match(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 
         for plugin in self._plugins:
-            cancels += plugin.post_match_check()
+            cancels += plugin.post_match()
 
         return cancels
 

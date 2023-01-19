@@ -156,8 +156,22 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
 
     # pylint: disable=unused-argument
+    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
+        """A hook called before order creation. If the method returns False
+        creation is abandoned.
+
+        Args:
+            side (Side): The side.
+            price (Decimal): The price.
+            style (Style): The style.
+
+        Returns:
+            bool: True if the create can continue; otherwise False.
+        """
+        return True
+
     def post_create(self, order: LimitOrder) -> List[int]:
-        """Method to call after create.
+        """A hook called after create.
 
         Args:
             order (LimitOrder): The new order.
@@ -168,47 +182,23 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         return []
 
     def post_delete(self, order: LimitOrder) -> None:
-        """Method called after delete.
+        """A hook called after delete.
 
         Args:
             order (LimitOrder): The order to delete.
         """
         return
 
-    def is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
-        """Method to check the validity of an order
-
-        Args:
-            side (Side): The side.
-            price (Decimal): The price.
-            style (Style): The style.
-
-        Returns:
-            bool: True if the order is valid; otherwise False.
-        """
-        return True
-
-    def find_cancellable_orders(self, order: LimitOrder) -> List[int]:
-        """A method to find cancellable orders
-
-        Args:
-            order (LimitOrder): The new order.
-
-        Returns:
-            List[int]: A list of order ids for cancellable orders.
-        """
-        return []
-
-    def pre_fill_check(self) -> List[LimitOrder]:
-        """A method to call before filling an order.
+    def pre_fill(self) -> List[LimitOrder]:
+        """A hook called before filling an order.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.
         """
         return []
 
-    def post_match_check(self) -> List[LimitOrder]:
-        """A function to call after a match.
+    def post_match(self) -> List[LimitOrder]:
+        """A hook called after a match.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.

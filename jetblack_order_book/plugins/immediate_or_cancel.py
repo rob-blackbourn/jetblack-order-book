@@ -53,7 +53,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         ):
             self._immediate_or_cancel[order.side].cancel(order.order_id)
 
-    def is_valid(self, side: Side, price: Decimal, style: Style) -> bool:
+    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
         if style != Style.IMMEDIATE_OR_CANCEL:
             return True
 
@@ -65,32 +65,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
             return True
         return False
 
-    def find_cancellable_orders(self, order: LimitOrder) -> List[int]:
-        if (
-            (
-                order.side in self._immediate_or_cancel
-            )
-            and
-            (
-                (
-                    order.size == Side.BUY and
-                    self._immediate_or_cancel[order.side].price < order.price
-                )
-                or
-                (
-                    order.size == Side.SELL and
-                    self._immediate_or_cancel[order.side].price < order.price
-                )
-            )
-        ):
-            return list(map(
-                lambda x: x.order_id,
-                self._immediate_or_cancel[order.side].orders
-            ))
-
-        return []
-
-    def post_match_check(self) -> List[LimitOrder]:
+    def post_match(self) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 
         if self.manager.bids:
