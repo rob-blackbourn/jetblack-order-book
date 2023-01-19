@@ -23,9 +23,7 @@ PluginFactory = Callable[
 class OrderBookManager(AbstractOrderBookManager):
     """An order book manager"""
 
-    def __init__(
-            self, plugins: Sequence[PluginFactory]
-    ) -> None:
+    def __init__(self, plugins: Sequence[PluginFactory]) -> None:
         self._plugins = [
             plugin(self) for plugin in plugins
         ]

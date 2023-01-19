@@ -10,20 +10,23 @@ from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import Side, Style
-from .order_book_manager import OrderBookManager
+from .order_book_manager import OrderBookManager, PluginFactory
 from .plugins import (
     create_fill_or_kill_plugin,
     create_immediate_or_cancel_plugin
 )
 
+ALL_PLUGINS = (create_fill_or_kill_plugin, create_immediate_or_cancel_plugin)
+
 
 class OrderBook(AbstractOrderBook):
     """An order book"""
 
-    def __init__(self) -> None:
-        self._manager = OrderBookManager(
-            (create_fill_or_kill_plugin, create_immediate_or_cancel_plugin)
-        )
+    def __init__(
+            self,
+            plugins: Sequence[PluginFactory] = ALL_PLUGINS
+    ) -> None:
+        self._manager = OrderBookManager(plugins)
 
     @property
     def bids(self) -> AggregateOrderSide:
