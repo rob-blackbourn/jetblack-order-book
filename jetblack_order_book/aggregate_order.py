@@ -35,7 +35,7 @@ class AggregateOrder:
         """The price level of the aggregate order.
 
         Returns:
-            Decimal: _description_
+            Decimal: The price for the aggregate order.
         """
         return self._price
 
