@@ -68,7 +68,7 @@ changed, to maintain fair execution.
 
 An order may be cancelled.
 
-## Plugins
+### Plugins
 
 In an attempt to keep the core code clean, order styles are implemented as
 plugins.
