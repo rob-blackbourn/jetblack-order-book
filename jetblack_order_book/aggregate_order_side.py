@@ -130,7 +130,7 @@ class AggregateOrderSide:
 
     def __eq__(self, other: object) -> bool:
         return (
-            isinstance(other, type(self)) and
+            isinstance(other, AggregateOrderSide) and
             self._orders == other._orders
         )
 
