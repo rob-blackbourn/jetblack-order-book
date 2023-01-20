@@ -1,4 +1,4 @@
-"""Tests for fill or kill orders"""
+"""Tests for fill-or-kill orders"""
 
 from decimal import Decimal
 
@@ -40,7 +40,7 @@ def test_fill_of_kill_buy():
     )
 
     assert not fills, "should be no fills"
-    assert cancels == [sell_id], "fill or kill should be cancelled"
+    assert cancels == [sell_id], "fill-or-kill should be cancelled"
 
 
 def test_fill_or_kill_sell():

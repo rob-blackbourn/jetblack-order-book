@@ -1,4 +1,4 @@
-"""Fill or kill plugin"""
+"""A plugin for fill-or-kill orders."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
         return None
 
     def _should_cancel(self, order1: LimitOrder, order2: LimitOrder) -> bool:
-        # If this is a fill or kill order the order must be completely filled.
+        # If this is a fill-or-kill order the order must be completely filled.
         return (
             order1.style == Style.FILL_OR_KILL and
             order1.size > order2.size
@@ -71,6 +71,6 @@ def create_fill_or_kill_plugin(
         manager (AbstractOrderBookManager): The order book manager.
 
     Returns:
-        AbstractOrderBookManagerPlugin: The fill or kill plugin.
+        AbstractOrderBookManagerPlugin: The fill-or-kill plugin.
     """
     return FillOrKillPlugin(manager)

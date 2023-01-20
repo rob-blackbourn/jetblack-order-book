@@ -1,4 +1,4 @@
-"""Tests for book or cancel orders"""
+"""Tests for book-or-cancel orders"""
 
 from decimal import Decimal
 
@@ -6,7 +6,7 @@ from jetblack_order_book import OrderBook, Fill, Side, Style
 
 
 def test_book_or_cancel_passive():
-    """Test a book or cancel where the order is passive"""
+    """Test a book-or-cancel where the order is passive"""
     order_book = OrderBook()
 
     assert str(order_book) == ' : ', "the order book should be empty"
@@ -33,7 +33,7 @@ def test_book_or_cancel_passive():
 
 
 def test_book_or_cancel_aggressor():
-    """Test a book or cancel where the order is the aggressor"""
+    """Test a book-or-cancel where the order is the aggressor"""
     order_book = OrderBook()
 
     assert str(order_book) == ' : ', "the order book should be empty"

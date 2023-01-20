@@ -1,4 +1,4 @@
-"""Fill or kill plugin"""
+"""A plugin for book-or-cancel orders."""
 
 from __future__ import annotations
 
@@ -45,6 +45,6 @@ def create_book_or_cancel_plugin(
         manager (AbstractOrderBookManager): The order book manager.
 
     Returns:
-        AbstractOrderBookManagerPlugin: The fill or kill plugin.
+        AbstractOrderBookManagerPlugin: The book-or-cancel plugin.
     """
     return BookOrCancelPlugin(manager)
