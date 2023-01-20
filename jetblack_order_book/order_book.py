@@ -15,7 +15,11 @@ from .order_book_manager import OrderBookManager
 
 
 class OrderBook(AbstractOrderBook):
-    """An order book"""
+    """An order book
+
+    This is a wrapper around OrderBookManager, to present a clean interface to
+    the client.
+    """
 
     def __init__(
             self,
