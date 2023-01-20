@@ -1,4 +1,18 @@
-"""A plugin for immediate-or-cancel orders."""
+"""A plugin for immediate-or-cancel orders.
+
+An immediate-or-cancel (IOC) order is an order to buy or sell that must be
+executed immediately. Any portion of an IOC order that cannot be filled
+immediately will be cancelled.
+
+The implications for the implementation is that IOC orders can be pruned on
+insertion. An IOC order at a worse price level should simply be rejected. This
+can be handled with the pre_create hook. If a new IOC order was added at a
+better price, IOC orders at the lower price can never be hit immediately and
+should be cancelled. This can be handled with the post_create hook.
+
+Finally all IOC orders that were at the best price level during a match that
+were not executed must be cancelled. This can be handled by the post_match hook.
+"""
 
 from __future__ import annotations
 

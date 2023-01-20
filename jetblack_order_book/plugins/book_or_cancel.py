@@ -1,4 +1,11 @@
-"""A plugin for book-or-cancel orders."""
+"""A plugin for book-or-cancel orders.
+
+A book-or-cancel order must enter the book before being filled; otherwise it
+must be cancelled.
+
+The pre_fill hook can be used to check that the order will not be immediately
+filled.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,10 @@
-"""A plugin for fill-or-kill orders."""
+"""A plugin for fill-or-kill orders.
+
+A fill-or-kill order must be completely filled; otherwise it must be cancelled.
+
+The pre_fill hook can be used to catch fill-or-kill orders that cannot be
+completely filled.
+"""
 
 from __future__ import annotations
 
