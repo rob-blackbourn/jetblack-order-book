@@ -173,6 +173,9 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
     def post_create(self, order: LimitOrder) -> List[int]:
         """A hook called after create.
 
+        If the hook returns orders, these orders will be cancelled, and creation
+        will continue.
+
         Args:
             order (LimitOrder): The new order.
 
@@ -184,6 +187,9 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
     def post_delete(self, order: LimitOrder) -> None:
         """A hook called after delete.
 
+        This hook can be used to clean up any locally cached data regarding the
+        deleted order.
+
         Args:
             order (LimitOrder): The order to delete.
         """
@@ -191,6 +197,9 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
 
     def pre_fill(self, aggressor_id) -> List[LimitOrder]:
         """A hook called before filling an order.
+
+        If the hook returns orders, these orders will be cancelled and the fill
+        will be aborted.
 
         Args:
             aggressor_id (int): The order id of the aggressor.
@@ -202,6 +211,10 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
 
     def post_match(self) -> List[LimitOrder]:
         """A hook called after a match.
+
+        If this hook returns orders, these orders will be cancelled. This can
+        be used to clean up orders which are no longer valid. For example any
+        "immediate or cancel" orders that were not matched should be cancelled.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.
