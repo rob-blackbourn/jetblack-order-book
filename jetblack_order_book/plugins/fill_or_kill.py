@@ -19,7 +19,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.FILL_OR_KILL,)
 
-    def pre_fill(self, aggressor_id: int) -> List[LimitOrder]:
+    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
 
         cancels: List[LimitOrder] = []
 

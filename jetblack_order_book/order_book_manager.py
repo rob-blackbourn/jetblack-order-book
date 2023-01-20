@@ -76,8 +76,10 @@ class OrderBookManager(AbstractOrderBookManager):
 
         self.side(order.side).add_limit_order(order)
 
-        # The id of the order that instigated the changes is supplied.
-        fills, cancels = self._match(order.order_id, cancels)
+        # Try to match the new order with the book. The id of the order that
+        # instigated the changes is supplied. The match may generated fills and
+        # cancellations.
+        fills, cancels = self._match(order, cancels)
 
         # Return the order id and any fills and cancels that were generated.
         return order.order_id, fills, list(map(lambda x: x.order_id, cancels))
@@ -141,13 +143,13 @@ class OrderBookManager(AbstractOrderBookManager):
 
     def _match(
             self,
-            aggressor_order_id: int,
+            aggressor: LimitOrder,
             cancels: List[LimitOrder]
     ) -> Tuple[List[Fill], List[LimitOrder]]:
         """Match bids against offers generating fills.
 
         Args:
-            aggressor_order_id (int): The order id that generated the match.
+            aggressor (LimitOrder): The order that instigated the match.
             cancels (List[LimitOrder]): A list of already cancelled orders.
 
         Returns:
@@ -162,7 +164,7 @@ class OrderBookManager(AbstractOrderBookManager):
             while self.bids.best and self.offers.best:
 
                 # Check if any orders require cancellation.
-                cancel_orders = self._pre_fill(aggressor_order_id)
+                cancel_orders = self._pre_fill(aggressor)
                 if cancel_orders:
                     for order in cancel_orders:
                         cancels.append(order)
@@ -178,7 +180,7 @@ class OrderBookManager(AbstractOrderBookManager):
                 )
                 fill_price = (
                     self.bids.best.first.price
-                    if self.bids.best.first.order_id == aggressor_order_id
+                    if self.bids.best.first.order_id == aggressor.order_id
                     else self.offers.best.first.price
                 )
 
@@ -218,11 +220,11 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return fills, cancels
 
-    def _pre_fill(self, aggressor_id: int) -> List[LimitOrder]:
+    def _pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
         cancels: List[LimitOrder] = []
 
         for plugin in self._plugins:
-            cancels += plugin.pre_fill(aggressor_id)
+            cancels += plugin.pre_fill(aggressor)
 
         return cancels
 

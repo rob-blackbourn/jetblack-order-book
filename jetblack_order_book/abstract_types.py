@@ -211,14 +211,14 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
         return
 
-    def pre_fill(self, aggressor_id) -> List[LimitOrder]:
+    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
         """A hook called before filling an order.
 
         If the hook returns orders, these orders will be cancelled and the fill
         will be aborted.
 
         Args:
-            aggressor_id (int): The order id of the aggressor.
+            aggressor (LimitOrder): The order that initiated the matching.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.

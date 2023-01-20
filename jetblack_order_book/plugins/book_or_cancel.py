@@ -18,18 +18,18 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.BOOK_OR_CANCEL,)
 
-    def pre_fill(self, aggressor_id: int) -> List[LimitOrder]:
+    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
 
         cancels: List[LimitOrder] = []
 
         if (
                 self.manager.bids.best.first.style == Style.BOOK_OR_CANCEL and
-                aggressor_id == self.manager.bids.best.first.order_id
+                aggressor.order_id == self.manager.bids.best.first.order_id
         ):
             cancels.append(self.manager.bids.best.first)
         elif (
                 self.manager.offers.best.first.style == Style.BOOK_OR_CANCEL and
-                aggressor_id == self.manager.offers.best.first.order_id
+                aggressor.order_id == self.manager.offers.best.first.order_id
         ):
             cancels.append(self.manager.offers.best.first)
 
