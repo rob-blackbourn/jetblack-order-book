@@ -131,8 +131,7 @@ class AggregateOrder:
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, AggregateOrder) and
-            self.price == other.price and
-            self.size == other.size
+            self._orders == other._orders
         )
 
     def __bool__(self) -> bool:

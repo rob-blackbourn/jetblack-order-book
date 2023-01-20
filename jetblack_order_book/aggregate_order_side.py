@@ -131,7 +131,7 @@ class AggregateOrderSide:
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, type(self)) and
-            all(a == b for a, b in zip(self._orders, other._orders))
+            self._orders == other._orders
         )
 
     def __bool__(self) -> bool:
