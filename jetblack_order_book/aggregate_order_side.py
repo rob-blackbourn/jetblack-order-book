@@ -25,7 +25,7 @@ class AggregateOrderSide:
         """
         return self._side
 
-    def orders(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+    def side_depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
         """Return the orders for the side.
 
         Args:
