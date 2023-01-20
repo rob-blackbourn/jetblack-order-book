@@ -21,6 +21,12 @@ class OrderBook(AbstractOrderBook):
             self,
             plugins: Sequence[PluginFactory] = ALL_PLUGINS
     ) -> None:
+        """Initialise the order book.
+
+        Args:
+            plugins (Sequence[PluginFactory], optional): Plugins to use to
+                handle order styles. Defaults to `ALL_PLUGINS`.
+        """
         self._manager = OrderBookManager(plugins)
 
     @property
