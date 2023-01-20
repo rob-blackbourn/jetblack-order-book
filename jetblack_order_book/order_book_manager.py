@@ -249,6 +249,7 @@ class OrderBookManager(AbstractOrderBookManager):
 
     def __format__(self, format_spec: str) -> str:
         levels = None if not format_spec else int(format_spec)
-        assert levels is None or levels > 0, 'levels should be > 0'
+        if not (levels is None or levels > 0):
+            raise ValueError('levels should be > 0')
         bids, offers = self.book_depth(levels)
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'

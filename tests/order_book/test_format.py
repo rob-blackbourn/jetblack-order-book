@@ -46,5 +46,5 @@ def test_format():
     try:
         format(order_book, "0")
         assert False, "format length should be greater than 0"
-    except AssertionError:
+    except ValueError:
         assert True, "Format should be less than 0"
