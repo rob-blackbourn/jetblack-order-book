@@ -17,6 +17,11 @@ class AggregateOrderSide:
     """
 
     def __init__(self, side: Side) -> None:
+        """Initialise an aggregate order side.
+
+        Args:
+            side (Side): The side.
+        """
         self._side = side
         self._orders: Deque[AggregateOrder] = deque()
 
@@ -135,4 +140,5 @@ class AggregateOrderSide:
         )
 
     def __bool__(self) -> bool:
+        """A side is True if it has orders; otherwise False."""
         return bool(self._orders)

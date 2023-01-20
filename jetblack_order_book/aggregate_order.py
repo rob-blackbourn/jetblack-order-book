@@ -135,11 +135,7 @@ class AggregateOrder:
         )
 
     def __bool__(self) -> bool:
-        """Check if there are any orders in the aggregate order.
-
-        Returns:
-            bool: Returns true if the aggregate order contains orders.
-        """
+        """An aggregate order is True if it has orders; otherwise False."""
         return len(self._orders) != 0
 
     def __len__(self) -> int:

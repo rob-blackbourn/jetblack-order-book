@@ -19,6 +19,12 @@ class OrderBookManager(AbstractOrderBookManager):
     """An order book manager"""
 
     def __init__(self, plugins: Sequence[PluginFactory]) -> None:
+        """Initialise the order book manager.
+
+        Args:
+            plugins (Sequence[PluginFactory]): Plugins used to managed order
+                styles.
+        """
         self._plugins = [
             plugin(self) for plugin in plugins
         ]
@@ -85,7 +91,8 @@ class OrderBookManager(AbstractOrderBookManager):
         return order.order_id, fills, list(map(lambda x: x.order_id, cancels))
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
-        assert size > 0, "size must be greater than 0"
+        if size <= 0:
+            raise ValueError("size must be greater than 0")
 
         order = self.find(order_id)
         self.side(order.side).amend_limit_order(order, size)

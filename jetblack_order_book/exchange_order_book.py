@@ -25,8 +25,8 @@ class ExchangeOrderBook:
 
         Args:
             tickers (Iterable[str]): The tickers for which order books are kept.
-            plugins (Sequence[PluginFactor], Optional): The plugins. Defaults to
-                ALL_PLUGINS.
+            plugins (Sequence[PluginFactory], Optional): The plugins. Defaults
+                to `ALL_PLUGINS`.
         """
         self.books: Dict[str, OrderBook] = {
             ticker: OrderBook(plugins)
