@@ -3,11 +3,11 @@
 from decimal import Decimal
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .abstract_types import PluginFactory
 from .constants import ALL_PLUGINS
 from .fill import Fill
 from .limit_order import Side, Style
 from .order_book import OrderBook
-from .order_book_manager import PluginFactory
 
 
 class ExchangeOrderBook:
@@ -17,8 +17,8 @@ class ExchangeOrderBook:
     """
 
     def __init__(
-        self,
-        tickers: Iterable[str],
+            self,
+            tickers: Iterable[str],
             plugins: Sequence[PluginFactory] = ALL_PLUGINS
     ) -> None:
         """Initialise the exchange order book.

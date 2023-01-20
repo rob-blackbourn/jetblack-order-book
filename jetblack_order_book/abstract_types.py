@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal
-from typing import List, Optional, Sequence, Tuple
+from typing import Callable, List, Optional, Sequence, Tuple
 
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
@@ -223,3 +223,9 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
             List[LimitOrder]: A list of cancellable orders.
         """
         return []
+
+
+PluginFactory = Callable[
+    [AbstractOrderBookManager],
+    AbstractOrderBookManagerPlugin
+]

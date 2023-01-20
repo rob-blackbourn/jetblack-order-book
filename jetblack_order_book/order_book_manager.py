@@ -3,21 +3,16 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from .abstract_types import (
     AbstractOrderBookManager,
-    AbstractOrderBookManagerPlugin
+    PluginFactory
 )
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
 from .limit_order import LimitOrder, Side, Style
-
-PluginFactory = Callable[
-    [AbstractOrderBookManager],
-    AbstractOrderBookManagerPlugin
-]
 
 
 class OrderBookManager(AbstractOrderBookManager):

@@ -5,13 +5,13 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import List, Optional, Sequence, Tuple
 
-from .abstract_types import AbstractOrderBook
+from .abstract_types import AbstractOrderBook, PluginFactory
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .constants import ALL_PLUGINS
 from .fill import Fill
 from .limit_order import Side, Style
-from .order_book_manager import OrderBookManager, PluginFactory
+from .order_book_manager import OrderBookManager
 
 
 class OrderBook(AbstractOrderBook):
