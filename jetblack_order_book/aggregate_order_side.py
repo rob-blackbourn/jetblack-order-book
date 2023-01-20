@@ -10,7 +10,11 @@ from .utils import index_of
 
 
 class AggregateOrderSide:
-    """The aggregate orders for a side"""
+    """The aggregate orders for a side.
+
+    This class handles side specific logic, in particular which orders are
+    "best"; higher for bids, lower for offers.
+    """
 
     def __init__(self, side: Side) -> None:
         self._side = side
@@ -79,7 +83,6 @@ class AggregateOrderSide:
         else:
             # Insert a new lowest price level
             self._orders.insert(index, AggregateOrder(order))
-    #
 
     def amend_limit_order(self, order: LimitOrder, size: int) -> None:
         """Amend a limit order.
