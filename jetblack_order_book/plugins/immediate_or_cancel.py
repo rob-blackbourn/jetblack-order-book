@@ -40,7 +40,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
         return False
 
-    def post_create(self, order: LimitOrder) -> List[int]:
+    def post_create(self, order: LimitOrder) -> List[LimitOrder]:
         # If this order is at a better price level than existing immediate or
         # cancel orders, they should be cancelled.
 
@@ -55,12 +55,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
             self._immediate_or_cancel[order.side].append(order)
             return []
 
-        cancels: List[int] = list(map(
-            lambda x: x.order_id,
-            self._immediate_or_cancel[order.side].orders
-        ))
-        for order_id in cancels:
-            self.manager.cancel_limit_order(order_id)
+        cancels = self._immediate_or_cancel[order.side].orders
         self._immediate_or_cancel[order.side] = AggregateOrder(order)
 
         return cancels

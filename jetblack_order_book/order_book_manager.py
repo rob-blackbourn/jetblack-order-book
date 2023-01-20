@@ -81,9 +81,11 @@ class OrderBookManager(AbstractOrderBookManager):
 
         self.side(order.side).add_limit_order(order)
 
-        # Return the order id and any fills that were generated. The id of the
-        # order that instigated the changes is supplied.
-        return order.order_id, *self._match(order.order_id, cancels)
+        # The id of the order that instigated the changes is supplied.
+        fills, cancels = self._match(order.order_id, cancels)
+
+        # Return the order id and any fills and cancels that were generated.
+        return order.order_id, fills, list(map(lambda x: x.order_id, cancels))
 
     def amend_limit_order(self, order_id: int, size: int) -> None:
         assert size > 0, "size must be greater than 0"
@@ -102,7 +104,7 @@ class OrderBookManager(AbstractOrderBookManager):
             price: Decimal,
             size: int,
             style: Style
-    ) -> Tuple[Optional[LimitOrder], List[int]]:
+    ) -> Tuple[Optional[LimitOrder], List[LimitOrder]]:
         if not self._pre_create(side, price, style):
             return None, []
 
@@ -111,6 +113,8 @@ class OrderBookManager(AbstractOrderBookManager):
         self._next_order_id += 1
 
         cancels = self._post_create(order)
+        for cancel in cancels:
+            self.cancel_limit_order(cancel.order_id)
 
         return order, cancels
 
@@ -121,8 +125,8 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return True
 
-    def _post_create(self, order: LimitOrder) -> List[int]:
-        cancels: List[int] = []
+    def _post_create(self, order: LimitOrder) -> List[LimitOrder]:
+        cancels: List[LimitOrder] = []
 
         for plugin in self._plugins:
             cancels += plugin.post_create(order)
@@ -143,16 +147,16 @@ class OrderBookManager(AbstractOrderBookManager):
     def _match(
             self,
             aggressor_order_id: int,
-            cancels: List[int]
-    ) -> Tuple[List[Fill], List[int]]:
+            cancels: List[LimitOrder]
+    ) -> Tuple[List[Fill], List[LimitOrder]]:
         """Match bids against offers generating fills.
 
         Args:
             aggressor_order_id (int): The order id that generated the match.
-            cancels (List[int]): A list of already cancelled orders.
+            cancels (List[LimitOrder]): A list of already cancelled orders.
 
         Returns:
-            Tuple[List[Fill], List[int]: The fills and cancels.
+            Tuple[List[LimitOrder], List[int]: The fills and cancels.
         """
         fills: List[Fill] = []
         while (
@@ -166,7 +170,7 @@ class OrderBookManager(AbstractOrderBookManager):
                 cancel_orders = self._pre_fill(aggressor_order_id)
                 if cancel_orders:
                     for order in cancel_orders:
-                        cancels.append(order.order_id)
+                        cancels.append(order)
                         self.side(order.side).cancel_limit_order(order)
                     break
 
@@ -207,7 +211,7 @@ class OrderBookManager(AbstractOrderBookManager):
             # Check if any orders require cancellation.
             cancel_orders = self._post_match()
             for order in cancel_orders:
-                cancels.append(order.order_id)
+                cancels.append(order)
                 self.side(order.side).cancel_limit_order(order)
 
             # if all orders have been executed at this price level remove the
