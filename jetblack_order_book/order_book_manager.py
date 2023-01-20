@@ -160,7 +160,7 @@ class OrderBookManager(AbstractOrderBookManager):
             cancels (List[LimitOrder]): A list of already cancelled orders.
 
         Returns:
-            Tuple[List[LimitOrder], List[int]: The fills and cancels.
+            Tuple[List[LimitOrder], List[LimitOrder]: The fills and cancels.
         """
         fills: List[Fill] = []
         while (
@@ -200,7 +200,8 @@ class OrderBookManager(AbstractOrderBookManager):
                 )
 
                 # Decrement the orders by the trade size, then check if the
-                # orders have been completely executed.
+                # orders have been completely executed; if they have, delete
+                # them.
 
                 self.bids.best.first.size -= fill_size
                 if self.bids.best.first.size == 0:
@@ -245,7 +246,7 @@ class OrderBookManager(AbstractOrderBookManager):
 
     def __eq__(self, other: object) -> bool:
         return (
-            isinstance(other, type(self)) and
+            isinstance(other, OrderBookManager) and
             self.bids == other.bids and
             self.offers == other.offers
         )
@@ -260,5 +261,7 @@ class OrderBookManager(AbstractOrderBookManager):
         levels = None if not format_spec else int(format_spec)
         if not (levels is None or levels > 0):
             raise ValueError('levels should be > 0')
+
         bids, offers = self.book_depth(levels)
+
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'
