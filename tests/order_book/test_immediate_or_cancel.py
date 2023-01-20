@@ -1,4 +1,4 @@
-"""Tests for immediate or cancel orders"""
+"""Tests for immediate-or-cancel orders"""
 
 from decimal import Decimal
 
@@ -6,7 +6,7 @@ from jetblack_order_book import OrderBook, Fill, Side, Style
 
 
 def test_immediate_or_cancel_buys():
-    """Test buys for order style immediate or cancel"""
+    """Test buys for order style immediate-or-cancel"""
 
     order_book = OrderBook()
 
@@ -69,7 +69,7 @@ def test_immediate_or_cancel_buys():
 
 
 def test_immediate_or_cancel_sells():
-    """Test sells for order style immediate or cancel"""
+    """Test sells for order style immediate-or-cancel"""
 
     order_book = OrderBook()
 

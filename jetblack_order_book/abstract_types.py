@@ -173,7 +173,7 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """A hook called before order creation.
 
         If the method returns False creation is abandoned. For example if an
-        "immediate or cancel" order was placed at a worse price the order will
+        immediate-or-cancel order was placed at a worse price the order will
         be immediately rejected.
 
         Args:
@@ -230,7 +230,7 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
 
         If this hook returns orders, these orders will be cancelled. This can
         be used to clean up orders which are no longer valid. For example any
-        "immediate or cancel" orders that were not matched should be cancelled.
+        immediate-or-cancel orders that were not matched should be cancelled.
 
         Returns:
             List[LimitOrder]: A list of cancellable orders.

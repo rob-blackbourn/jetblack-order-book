@@ -1,4 +1,4 @@
-"""Immediate or cancel plugin"""
+"""A plugin for immediate-or-cancel orders."""
 
 from __future__ import annotations
 
@@ -28,16 +28,23 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         if style != Style.IMMEDIATE_OR_CANCEL:
             return True
 
-        # If there are immediate and cancel orders at a better price this order
-        # is invalid.
+        # If there are immediate and cancel orders at a better price then this
+        # order is invalid.
 
         if side not in self._immediate_or_cancel:
+            # There are no immediate-or-cancel orders for this side, so the
+            # order is valid.
             return True
         if side == Side.BUY and price >= self._immediate_or_cancel[side].price:
+            # The order has the same or a greater price than the exiting buy
+            # immediate-or-cancel orders, so the order is valid.
             return True
         if side == Side.SELL and price <= self._immediate_or_cancel[side].price:
+            # The order has the same or a lesser price than the exiting sell
+            # immediate-or-cancel orders, so the order is valid.
             return True
 
+        # The order should be rejected.
         return False
 
     def post_create(self, order: LimitOrder) -> List[LimitOrder]:
@@ -45,16 +52,23 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         # cancel orders, they should be cancelled.
 
         if order.style != Style.IMMEDIATE_OR_CANCEL:
+            # Only immediate-or-cancel orders are relevant.
             return []
 
         if order.side not in self._immediate_or_cancel:
+            # If there are no immediate-or-cancel orders for this side just
+            # add it.
             self._immediate_or_cancel[order.side] = AggregateOrder(order)
             return []
 
         if order.price == self._immediate_or_cancel[order.side].price:
+            # If this order is at the same price append it.
             self._immediate_or_cancel[order.side].append(order)
             return []
 
+        # As the pre_create function has already established this order is valid
+        # there must be other immediate-or-cancel orders at a worse price. Those
+        # orders must be cancelled, replaced with the new order.
         cancels = self._immediate_or_cancel[order.side].orders
         self._immediate_or_cancel[order.side] = AggregateOrder(order)
 
@@ -69,7 +83,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
             self._immediate_or_cancel[order.side].cancel(order.order_id)
 
     def post_match(self) -> List[LimitOrder]:
-        # After a match any immediate or cancel orders at the best price level
+        # After a match any immediate-or-cancel orders at the best price level
         # must be cancelled.
 
         cancels: List[LimitOrder] = []
@@ -98,6 +112,6 @@ def create_immediate_or_cancel_plugin(
         manager (AbstractOrderBookManager): The order book manager.
 
     Returns:
-        AbstractOrderBookManagerPlugin: A plugin for immediate or cancel orders.
+        AbstractOrderBookManagerPlugin: A plugin for immediate-or-cancel orders.
     """
     return ImmediateOrCancelPlugin(manager)
