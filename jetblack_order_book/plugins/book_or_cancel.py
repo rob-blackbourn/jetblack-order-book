@@ -15,7 +15,7 @@ from ..abstract_types import (
     AbstractOrderBookManager,
     AbstractOrderBookManagerPlugin
 )
-from ..limit_order import LimitOrder, Style
+from ..order import Order, Style
 
 
 class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
@@ -25,9 +25,9 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.BOOK_OR_CANCEL,)
 
-    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
+    def pre_fill(self, aggressor: Order) -> List[Order]:
 
-        cancels: List[LimitOrder] = []
+        cancels: List[Order] = []
 
         if (
                 self.manager.bids.best.first.style == Style.BOOK_OR_CANCEL and

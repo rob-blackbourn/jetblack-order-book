@@ -24,7 +24,7 @@ from ..abstract_types import (
     AbstractOrderBookManagerPlugin
 )
 from ..aggregate_order import AggregateOrder
-from ..limit_order import LimitOrder, Side, Style
+from ..order import Order, Side, Style
 
 
 class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
@@ -61,7 +61,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         # The order should be rejected.
         return False
 
-    def post_create(self, order: LimitOrder) -> List[LimitOrder]:
+    def post_create(self, order: Order) -> List[Order]:
         # If this order is at a better price level than existing immediate or
         # cancel orders, they should be cancelled.
 
@@ -88,7 +88,7 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
         return cancels
 
-    def post_delete(self, order: LimitOrder) -> None:
+    def post_delete(self, order: Order) -> None:
         # Remove the order from the local cache.
         if (
                 order.side in self._immediate_or_cancel and
@@ -96,11 +96,11 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         ):
             self._immediate_or_cancel[order.side].cancel(order.order_id)
 
-    def post_match(self) -> List[LimitOrder]:
+    def post_match(self) -> List[Order]:
         # After a match any immediate-or-cancel orders at the best price level
         # must be cancelled.
 
-        cancels: List[LimitOrder] = []
+        cancels: List[Order] = []
 
         if self.manager.bids:
             orders = self.manager.bids.best.find_by_style(

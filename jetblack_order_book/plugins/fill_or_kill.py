@@ -15,7 +15,7 @@ from ..abstract_types import (
     AbstractOrderBookManagerPlugin
 )
 from ..aggregate_order import AggregateOrder
-from ..limit_order import LimitOrder, Style
+from ..order import Order, Style
 
 
 class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
@@ -25,9 +25,9 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.FILL_OR_KILL,)
 
-    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
+    def pre_fill(self, aggressor: Order) -> List[Order]:
 
-        cancels: List[LimitOrder] = []
+        cancels: List[Order] = []
 
         # Ensure time weighted.
         order = (
@@ -51,7 +51,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
             self,
             order1: AggregateOrder,
             order2: AggregateOrder,
-    ) -> Optional[LimitOrder]:
+    ) -> Optional[Order]:
         if self._should_cancel(order1.first, order2.first):
             return order1.first
 
@@ -60,7 +60,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
 
         return None
 
-    def _should_cancel(self, order1: LimitOrder, order2: LimitOrder) -> bool:
+    def _should_cancel(self, order1: Order, order2: Order) -> bool:
         # If this is a fill-or-kill order the order must be completely filled.
         return (
             order1.style == Style.FILL_OR_KILL and

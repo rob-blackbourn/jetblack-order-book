@@ -11,13 +11,13 @@ def test_book_or_cancel_passive():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    buy_id, _, _ = order_book.add_limit_order(
+    buy_id, _, _ = order_book.add_order(
         Side.BUY,
         Decimal('11'),
         5,
         Style.BOOK_OR_CANCEL
     )
-    sell_id, fills, cancels = order_book.add_limit_order(
+    sell_id, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('11'),
         5,
@@ -38,7 +38,7 @@ def test_book_or_cancel_aggressor():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    buy_id, _, _ = order_book.add_limit_order(
+    buy_id, _, _ = order_book.add_order(
         Side.BUY,
         Decimal('11'),
         5,
@@ -46,7 +46,7 @@ def test_book_or_cancel_aggressor():
     )
     assert buy_id is not None
 
-    sell_id, fills, cancels = order_book.add_limit_order(
+    sell_id, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('11'),
         5,

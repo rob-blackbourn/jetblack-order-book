@@ -10,7 +10,7 @@ from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .constants import ALL_PLUGINS
 from .fill import Fill
-from .limit_order import Side, Style
+from .order import Side, Style
 from .order_book_manager import OrderBookManager
 
 
@@ -47,20 +47,20 @@ class OrderBook(AbstractOrderBook):
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
         return self._manager.book_depth(levels)
 
-    def add_limit_order(
+    def add_order(
             self,
             side: Side,
             price: Decimal,
             size: int,
             style: Style
     ) -> Tuple[Optional[int], List[Fill], List[int]]:
-        return self._manager.add_limit_order(side, price, size, style)
+        return self._manager.add_order(side, price, size, style)
 
-    def amend_limit_order(self, order_id: int, size: int) -> None:
-        self._manager.amend_limit_order(order_id, size)
+    def amend_order(self, order_id: int, size: int) -> None:
+        self._manager.amend_order(order_id, size)
 
-    def cancel_limit_order(self, order_id: int) -> None:
-        self._manager.cancel_limit_order(order_id)
+    def cancel_order(self, order_id: int) -> None:
+        self._manager.cancel_order(order_id)
 
     def __eq__(self, other: object) -> bool:
         return (

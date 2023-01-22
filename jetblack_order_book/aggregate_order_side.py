@@ -5,7 +5,7 @@ from itertools import islice
 from typing import Deque, Sequence, Optional
 
 from .aggregate_order import AggregateOrder
-from .limit_order import LimitOrder, Side
+from .order import Order, Side
 from .utils import index_of
 
 
@@ -58,11 +58,11 @@ class AggregateOrderSide:
         else:
             del self._orders[-1]
 
-    def add_limit_order(self, order: LimitOrder) -> None:
-        """Add a limit order.
+    def add_order(self, order: Order) -> None:
+        """Add an order.
 
         Args:
-            order (LimitOrder): The order.
+            order (Order): The order.
         """
         # Find where the order should go.
         index = index_of(
@@ -80,11 +80,11 @@ class AggregateOrderSide:
             # Insert a new lowest price level
             self._orders.insert(index, AggregateOrder(order))
 
-    def amend_limit_order(self, order: LimitOrder, size: int) -> None:
-        """Amend a limit order.
+    def amend_order(self, order: Order, size: int) -> None:
+        """Amend an order.
 
         Args:
-            order (LimitOrder): The order.
+            order (Order): The order.
             size (int): The new size.
 
         Raises:
@@ -101,11 +101,11 @@ class AggregateOrderSide:
         # Change the size.
         self._orders[index].change_size(order.order_id, size)
 
-    def cancel_limit_order(self, order: LimitOrder) -> None:
-        """Cancel a limit order.
+    def cancel_order(self, order: Order) -> None:
+        """Cancel an order.
 
         Args:
-            order (LimitOrder): The order
+            order (Order): The order
 
         Raises:
             KeyError: If the order is not in this side.

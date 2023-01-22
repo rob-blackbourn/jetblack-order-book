@@ -10,7 +10,7 @@ def test_immediate_or_cancel_buys():
 
     order_book = OrderBook()
 
-    buy_id1, fills, cancels = order_book.add_limit_order(
+    buy_id1, fills, cancels = order_book.add_order(
         Side.BUY,
         Decimal('10'),
         10,
@@ -20,7 +20,7 @@ def test_immediate_or_cancel_buys():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    buy_id, fills, cancels = order_book.add_limit_order(
+    buy_id, fills, cancels = order_book.add_order(
         Side.BUY,
         Decimal('9'),
         10,
@@ -30,7 +30,7 @@ def test_immediate_or_cancel_buys():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    buy_id2, _, cancels = order_book.add_limit_order(
+    buy_id2, _, cancels = order_book.add_order(
         Side.BUY,
         Decimal('10'),
         10,
@@ -40,7 +40,7 @@ def test_immediate_or_cancel_buys():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    buy_id3, fills, cancels = order_book.add_limit_order(
+    buy_id3, fills, cancels = order_book.add_order(
         Side.BUY,
         Decimal('11'),
         10,
@@ -53,7 +53,7 @@ def test_immediate_or_cancel_buys():
         buy_id2
     ], "higher priced buy should cancel previous buys"
 
-    sell_id, fills, cancels = order_book.add_limit_order(
+    sell_id, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('11'),
         5,
@@ -73,7 +73,7 @@ def test_immediate_or_cancel_sells():
 
     order_book = OrderBook()
 
-    sell_id1, fills, cancels = order_book.add_limit_order(
+    sell_id1, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('11'),
         10,
@@ -83,7 +83,7 @@ def test_immediate_or_cancel_sells():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    sell_id, fills, cancels = order_book.add_limit_order(
+    sell_id, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('12'),
         10,
@@ -93,7 +93,7 @@ def test_immediate_or_cancel_sells():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    sell_id2, _, cancels = order_book.add_limit_order(
+    sell_id2, _, cancels = order_book.add_order(
         Side.SELL,
         Decimal('11'),
         10,
@@ -103,7 +103,7 @@ def test_immediate_or_cancel_sells():
     assert not fills, "should not generate fills"
     assert not cancels, "should not generate cancels"
 
-    sell_id3, fills, cancels = order_book.add_limit_order(
+    sell_id3, fills, cancels = order_book.add_order(
         Side.SELL,
         Decimal('10'),
         10,
@@ -116,7 +116,7 @@ def test_immediate_or_cancel_sells():
         sell_id2
     ], "lower priced sell should cancel previous sells"
 
-    buy_id, fills, cancels = order_book.add_limit_order(
+    buy_id, fills, cancels = order_book.add_order(
         Side.BUY,
         Decimal('10'),
         5,

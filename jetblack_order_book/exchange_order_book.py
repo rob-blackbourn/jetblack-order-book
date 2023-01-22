@@ -6,7 +6,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from .abstract_types import PluginFactory
 from .constants import ALL_PLUGINS
 from .fill import Fill
-from .limit_order import Side, Style
+from .order import Side, Style
 from .order_book import OrderBook
 
 
@@ -33,7 +33,7 @@ class ExchangeOrderBook:
             for ticker in tickers
         }
 
-    def add_limit_order(
+    def add_order(
             self,
             ticker: str,
             side: Side,
@@ -41,7 +41,7 @@ class ExchangeOrderBook:
             size: int,
             style: Style
     ) -> Tuple[Optional[int], List[Fill], List[int]]:
-        """Add a limit order for a ticker.
+        """Add an order for a ticker.
 
         Args:
             ticker (str): The ticker.
@@ -56,10 +56,10 @@ class ExchangeOrderBook:
             list of cancelled order ids.
         """
         order_book = self.books[ticker]
-        return order_book.add_limit_order(side, price, size, style)
+        return order_book.add_order(side, price, size, style)
 
-    def amend_limit_order(self, ticker: str, order_id: int, size: int) -> None:
-        """Amend a limit order.
+    def amend_order(self, ticker: str, order_id: int, size: int) -> None:
+        """Amend aa order.
 
         Args:
             ticker (str): The ticker.
@@ -67,14 +67,14 @@ class ExchangeOrderBook:
             size (int): The new size.
         """
         order_book = self.books[ticker]
-        order_book.amend_limit_order(order_id, size)
+        order_book.amend_order(order_id, size)
 
-    def cancel_limit_order(self, ticker: str, order_id: int) -> None:
-        """Cancel a limit order.
+    def cancel_order(self, ticker: str, order_id: int) -> None:
+        """Cancel an order.
 
         Args:
             ticker (str): The ticker.
             order_id (int): The order id.
         """
         order_book = self.books[ticker]
-        order_book.cancel_limit_order(order_id)
+        order_book.cancel_order(order_id)

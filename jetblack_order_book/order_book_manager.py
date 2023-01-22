@@ -12,7 +12,7 @@ from .abstract_types import (
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
 from .fill import Fill
-from .limit_order import LimitOrder, Side, Style
+from .order import Order, Side, Style
 
 
 class OrderBookManager(AbstractOrderBookManager):
@@ -36,7 +36,7 @@ class OrderBookManager(AbstractOrderBookManager):
         )
         self._supported_styles.add(Style.LIMIT)
 
-        self._orders: Dict[int, LimitOrder] = {}
+        self._orders: Dict[int, Order] = {}
         self._next_order_id = 1
         self._sides = {
             Side.BUY: AggregateOrderSide(Side.BUY),
@@ -60,7 +60,7 @@ class OrderBookManager(AbstractOrderBookManager):
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
         return self.bids.depth(levels), self.offers.depth(levels)
 
-    def add_limit_order(
+    def add_order(
             self,
             side: Side,
             price: Decimal,
@@ -80,7 +80,7 @@ class OrderBookManager(AbstractOrderBookManager):
         if order is None:
             return None, [], []
 
-        self.side(order.side).add_limit_order(order)
+        self.side(order.side).add_order(order)
 
         # Try to match the new order with the book. The id of the order that
         # instigated the changes is supplied. The match may generated fills and
@@ -90,16 +90,16 @@ class OrderBookManager(AbstractOrderBookManager):
         # Return the order id and any fills and cancels that were generated.
         return order.order_id, fills, list(map(lambda x: x.order_id, cancels))
 
-    def amend_limit_order(self, order_id: int, size: int) -> None:
+    def amend_order(self, order_id: int, size: int) -> None:
         if size <= 0:
             raise ValueError("size must be greater than 0")
 
         order = self.find(order_id)
-        self.side(order.side).amend_limit_order(order, size)
+        self.side(order.side).amend_order(order, size)
 
-    def cancel_limit_order(self, order_id: int) -> None:
+    def cancel_order(self, order_id: int) -> None:
         order = self.find(order_id)
-        self.side(order.side).cancel_limit_order(order)
+        self.side(order.side).cancel_order(order)
         self.delete(order)
 
     def create(
@@ -108,17 +108,17 @@ class OrderBookManager(AbstractOrderBookManager):
             price: Decimal,
             size: int,
             style: Style
-    ) -> Tuple[Optional[LimitOrder], List[LimitOrder]]:
+    ) -> Tuple[Optional[Order], List[Order]]:
         if not self._pre_create(side, price, style):
             return None, []
 
-        order = LimitOrder(self._next_order_id, side, price, size, style)
+        order = Order(self._next_order_id, side, price, size, style)
         self._orders[order.order_id] = order
         self._next_order_id += 1
 
         cancels = self._post_create(order)
         for cancel in cancels:
-            self.cancel_limit_order(cancel.order_id)
+            self.cancel_order(cancel.order_id)
 
         return order, cancels
 
@@ -129,38 +129,38 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return True
 
-    def _post_create(self, order: LimitOrder) -> List[LimitOrder]:
-        cancels: List[LimitOrder] = []
+    def _post_create(self, order: Order) -> List[Order]:
+        cancels: List[Order] = []
 
         for plugin in self._plugins:
             cancels += plugin.post_create(order)
 
         return cancels
 
-    def find(self, order_id: int) -> LimitOrder:
+    def find(self, order_id: int) -> Order:
         return self._orders[order_id]
 
-    def delete(self, order: LimitOrder) -> None:
+    def delete(self, order: Order) -> None:
         del self._orders[order.order_id]
         self._post_delete(order)
 
-    def _post_delete(self, order: LimitOrder) -> None:
+    def _post_delete(self, order: Order) -> None:
         for plugin in self._plugins:
             plugin.post_delete(order)
 
     def _match(
             self,
-            aggressor: LimitOrder,
-            cancels: List[LimitOrder]
-    ) -> Tuple[List[Fill], List[LimitOrder]]:
+            aggressor: Order,
+            cancels: List[Order]
+    ) -> Tuple[List[Fill], List[Order]]:
         """Match bids against offers generating fills.
 
         Args:
-            aggressor (LimitOrder): The order that instigated the match.
-            cancels (List[LimitOrder]): A list of already cancelled orders.
+            aggressor (Order): The order that instigated the match.
+            cancels (List[Order]): A list of already cancelled orders.
 
         Returns:
-            Tuple[List[LimitOrder], List[LimitOrder]: The fills and cancels.
+            Tuple[List[Order], List[Order]: The fills and cancels.
         """
         fills: List[Fill] = []
         while (
@@ -175,7 +175,7 @@ class OrderBookManager(AbstractOrderBookManager):
                 if cancel_orders:
                     for order in cancel_orders:
                         cancels.append(order)
-                        self.side(order.side).cancel_limit_order(order)
+                        self.side(order.side).cancel_order(order)
                     break
 
                 # The price is that of the newest order in case of a cross;
@@ -217,7 +217,7 @@ class OrderBookManager(AbstractOrderBookManager):
             cancel_orders = self._post_match()
             for order in cancel_orders:
                 cancels.append(order)
-                self.side(order.side).cancel_limit_order(order)
+                self.side(order.side).cancel_order(order)
 
             # if all orders have been executed at this price level remove the
             # price level.
@@ -228,16 +228,16 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return fills, cancels
 
-    def _pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
-        cancels: List[LimitOrder] = []
+    def _pre_fill(self, aggressor: Order) -> List[Order]:
+        cancels: List[Order] = []
 
         for plugin in self._plugins:
             cancels += plugin.pre_fill(aggressor)
 
         return cancels
 
-    def _post_match(self) -> List[LimitOrder]:
-        cancels: List[LimitOrder] = []
+    def _post_match(self) -> List[Order]:
+        cancels: List[Order] = []
 
         for plugin in self._plugins:
             cancels += plugin.post_match()

@@ -1,4 +1,4 @@
-"""Limit Order"""
+"""Order"""
 
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ class Style(Enum):
     BOOK_OR_CANCEL = auto()
 
 
-class LimitOrder:
-    """A limit order is an order which gets executed at a given price"""
+class Order:
+    """Aa order is an order which gets executed at a given price"""
 
     def __init__(
             self,
@@ -34,7 +34,7 @@ class LimitOrder:
             size: int,
             style: Style
     ) -> None:
-        """Initialise a limit order.
+        """Initialise aa order.
 
         The order_id is an ordinal integer which represents the order in which
         orders are placed.
@@ -42,7 +42,7 @@ class LimitOrder:
         Args:
             order_id (int): The order id.
             side (Side): Buy or sell.
-            price (Decimal): The price at which the order can be executed.
+            price (Decimal): The price.
             size (int): The order size.
             style (Style): The order style.
         """
@@ -75,23 +75,28 @@ class LimitOrder:
         """The price at which the order can be filled.
 
         Returns:
-            Decimal: The limit price.
+            Decimal: The order price.
         """
         return self._price
 
     @property
     def style(self) -> Style:
+        """The order style.
+
+        Returns:
+            Style: The style of the order.
+        """
         return self._style
 
     def __repr__(self) -> str:
-        return f"LimitOrder({self._order_id}, {self._side}, {self._price}, {self.size})"
+        return f"Order({self._order_id}, {self._side}, {self._price}, {self.size})"
 
     def __str__(self) -> str:
         return f"{self.price}x{self.size}"
 
     def __eq__(self, other: object) -> bool:
         return (
-            isinstance(other, LimitOrder) and
+            isinstance(other, Order) and
             self.order_id == other.order_id and
             self.side == other.side and
             self.price == other.price and
