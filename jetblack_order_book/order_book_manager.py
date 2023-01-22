@@ -196,40 +196,9 @@ class OrderBookManager(AbstractOrderBookManager):
                         self._side(order).cancel_order(order)
                     break
 
-                # The price is that of the newest order in case of a cross;
-                # where the newest order price exceeds (rather than matched)
-                # the best opposing price.
-                fill_size = min(
-                    bids.best.first.size,
-                    offers.best.first.size
-                )
-                fill_price = (
-                    bids.best.first.price
-                    if bids.best.first.order_id == aggressor.order_id
-                    else offers.best.first.price
-                )
-
                 fills.append(
-                    Fill(
-                        bids.best.first.order_id,
-                        offers.best.first.order_id,
-                        fill_price,
-                        fill_size)
+                    self._fill_best(bids, offers, aggressor)
                 )
-
-                # Decrement the orders by the trade size, then check if the
-                # orders have been completely executed; if they have, delete
-                # them.
-
-                bids.best.first.size -= fill_size
-                if bids.best.first.size == 0:
-                    self.delete(bids.best.first)
-                    bids.best.delete_first()
-
-                offers.best.first.size -= fill_size
-                if offers.best.first.size == 0:
-                    self.delete(offers.best.first)
-                    offers.best.delete_first()
 
             # Check if any orders require cancellation.
             cancel_orders = self._post_match()
@@ -245,6 +214,48 @@ class OrderBookManager(AbstractOrderBookManager):
                 self.limit_offers.delete_best()
 
         return fills, cancels
+
+    def _fill_best(
+            self,
+            bids: AggregateOrderSide,
+            offers: AggregateOrderSide,
+            aggressor: Order
+    ) -> Fill:
+        # The price is that of the newest order in case of a cross;
+        # where the newest order price exceeds (rather than matched)
+        # the best opposing price.
+        fill_size = min(
+            bids.best.first.size,
+            offers.best.first.size
+        )
+        fill_price = (
+            bids.best.first.price
+            if bids.best.first.order_id == aggressor.order_id
+            else offers.best.first.price
+        )
+
+        fill = Fill(
+            bids.best.first.order_id,
+            offers.best.first.order_id,
+            fill_price,
+            fill_size
+        )
+
+        # Decrement the orders by the trade size, then check if the
+        # orders have been completely executed; if they have, delete
+        # them.
+
+        bids.best.first.size -= fill_size
+        if bids.best.first.size == 0:
+            self.delete(bids.best.first)
+            bids.best.delete_first()
+
+        offers.best.first.size -= fill_size
+        if offers.best.first.size == 0:
+            self.delete(offers.best.first)
+            offers.best.delete_first()
+
+        return fill
 
     def _fillable_sides(self, aggressor: Order) -> Tuple[AggregateOrderSide, AggregateOrderSide]:
         if (
