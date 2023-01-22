@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Callable, List
 
 from .utils import index_of
-from .order import Order, Style
+from .order import Order
 
 
 class AggregateOrder:
