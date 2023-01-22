@@ -103,14 +103,14 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         cancels: List[Order] = []
 
         if self.manager.bids:
-            orders = self.manager.bids.best.find_by_style(
-                Style.IMMEDIATE_OR_CANCEL
+            orders = self.manager.bids.best.find_all(
+                lambda x: x.style == Style.IMMEDIATE_OR_CANCEL
             )
             cancels += orders
 
         if self.manager.offers:
-            orders = self.manager.offers.best.find_by_style(
-                Style.IMMEDIATE_OR_CANCEL
+            orders = self.manager.offers.best.find_all(
+                lambda x: x.style == Style.IMMEDIATE_OR_CANCEL
             )
             cancels += orders
 

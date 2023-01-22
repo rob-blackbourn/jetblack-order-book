@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from decimal import Decimal
-from typing import List
+from typing import Callable, List
 
 from .utils import index_of
 from .order import Order, Style
@@ -113,19 +113,19 @@ class AggregateOrder:
 
         del self._orders[index]
 
-    def find_by_style(self, style: Style) -> List[Order]:
-        """Find orders by style.
+    def find_all(self, predicate: Callable[[Order], bool]) -> List[Order]:
+        """Find orders which match a predicate.
 
         Args:
-            style (Style): The style.
+            predicate (Callable[[Order], bool]): The predicate.
 
         Returns:
-            List[Order]: The orders for the style.
+            List[Order]: Orders which match the predicate.
         """
         return [
             order
             for order in self._orders
-            if order.style == style
+            if predicate(order)
         ]
 
     def __eq__(self, other: object) -> bool:
