@@ -3,23 +3,24 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from enum import IntEnum
+from enum import Enum, auto
 
 
-class Side(IntEnum):
+class Side(Enum):
     """The order side"""
 
-    BUY = 1
-    SELL = -1
+    BUY = auto()
+    SELL = auto()
 
 
-class Style(IntEnum):
+class Style(Enum):
     """The order style"""
 
-    VANILLA = 0
-    FILL_OR_KILL = 1
-    IMMEDIATE_OR_CANCEL = 2
-    BOOK_OR_CANCEL = 3
+    LIMIT = auto()
+    STOP = auto()
+    FILL_OR_KILL = auto()
+    IMMEDIATE_OR_CANCEL = auto()
+    BOOK_OR_CANCEL = auto()
 
 
 class LimitOrder:

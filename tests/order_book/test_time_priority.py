@@ -18,12 +18,12 @@ def test_time_priority():
         Side.BUY,
         Decimal('10.5'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
     buy2, _, _ = order_book.add_limit_order(
         Side.BUY, Decimal('10.5'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     # Add a sell for the same price with a greater total size
@@ -31,7 +31,7 @@ def test_time_priority():
         Side.SELL,
         Decimal('10.5'),
         20,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy1 is not None and sell is not None and buy2 is not None and fills == [

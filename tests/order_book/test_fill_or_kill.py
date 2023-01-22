@@ -11,7 +11,7 @@ def test_fill_of_kill_buy():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    order_book.add_limit_order(Side.BUY, Decimal('10'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10'), 5, Style.LIMIT)
     buy_id, _, _ = order_book.add_limit_order(
         Side.BUY,
         Decimal('11'),
@@ -22,7 +22,7 @@ def test_fill_of_kill_buy():
         Side.SELL,
         Decimal('11'),
         15,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy_id is not None and sell_id is not None and fills == [
@@ -47,7 +47,7 @@ def test_fill_or_kill_sell():
     """Test a successful kill or fill where the order was a sell"""
     order_book = OrderBook()
 
-    order_book.add_limit_order(Side.SELL, Decimal('11'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('11'), 5, Style.LIMIT)
     sell_id, _, _ = order_book.add_limit_order(
         Side.SELL,
         Decimal('10'),
@@ -58,7 +58,7 @@ def test_fill_or_kill_sell():
         Side.BUY,
         Decimal('10'),
         15,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy_id is not None and sell_id is not None and fills == [
@@ -100,7 +100,7 @@ def test_fill_or_kill_cancel_buy_order():
         Side.SELL,
         Decimal('10'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert not fills, "should not fill"
@@ -128,7 +128,7 @@ def test_fill_or_kill_cancel_sell_order():
         Side.BUY,
         Decimal('11'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert not fills, "should not fill"

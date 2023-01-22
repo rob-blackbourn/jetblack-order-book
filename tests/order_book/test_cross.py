@@ -19,19 +19,19 @@ def test_cross():
         Side.BUY,
         Decimal('10.5'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
     buy2, _, _ = order_book.add_limit_order(
         Side.BUY,
         Decimal('11.0'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
     sell1, fills, _ = order_book.add_limit_order(
         Side.SELL,
         Decimal('10.0'),
         15,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy1 is not None and sell1 is not None and buy2 is not None and fills == [

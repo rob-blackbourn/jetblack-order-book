@@ -21,7 +21,7 @@ def test_book_or_cancel_passive():
         Side.SELL,
         Decimal('11'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy_id is not None and sell_id is not None and fills == [
@@ -42,7 +42,7 @@ def test_book_or_cancel_aggressor():
         Side.BUY,
         Decimal('11'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
     assert buy_id is not None
 

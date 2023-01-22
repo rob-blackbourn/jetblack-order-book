@@ -12,12 +12,12 @@ def test_format():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add 3 buys and 2 sells at distinct price levels.
-    order_book.add_limit_order(Side.BUY, Decimal('10.1'), 5, Style.VANILLA)
-    order_book.add_limit_order(Side.BUY, Decimal('10.2'), 5, Style.VANILLA)
-    order_book.add_limit_order(Side.BUY, Decimal('10.3'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.1'), 5, Style.LIMIT)
+    order_book.add_limit_order(Side.BUY, Decimal('10.2'), 5, Style.LIMIT)
+    order_book.add_limit_order(Side.BUY, Decimal('10.3'), 5, Style.LIMIT)
 
-    order_book.add_limit_order(Side.SELL, Decimal('11.1'), 5, Style.VANILLA)
-    order_book.add_limit_order(Side.SELL, Decimal('11.2'), 5, Style.VANILLA)
+    order_book.add_limit_order(Side.SELL, Decimal('11.1'), 5, Style.LIMIT)
+    order_book.add_limit_order(Side.SELL, Decimal('11.2'), 5, Style.LIMIT)
 
     assert str(
         order_book

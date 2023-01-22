@@ -18,13 +18,13 @@ def test_partial_fill():
         Side.BUY,
         Decimal('10.5'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
     sell1, fills, _ = order_book.add_limit_order(
         Side.SELL,
         Decimal('10.5'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy1 is not None and sell1 is not None and fills == [

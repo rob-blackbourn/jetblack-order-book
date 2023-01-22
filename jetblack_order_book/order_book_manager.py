@@ -34,7 +34,7 @@ class OrderBookManager(AbstractOrderBookManager):
             for plugin in self._plugins
             for style in plugin.valid_styles
         )
-        self._supported_styles.add(Style.VANILLA)
+        self._supported_styles.add(Style.LIMIT)
 
         self._orders: Dict[int, LimitOrder] = {}
         self._next_order_id = 1

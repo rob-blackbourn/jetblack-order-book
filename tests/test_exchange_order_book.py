@@ -26,7 +26,7 @@ def test_smoke():
         ('AAPL', Side.BUY, Decimal('134.20'), 120),
     ]
     for ticker, side, price, size in orders:
-        order_book.add_limit_order(ticker, side, price, size, Style.VANILLA)
+        order_book.add_limit_order(ticker, side, price, size, Style.LIMIT)
 
     assert str(
         order_book.books['AAPL']
@@ -41,7 +41,7 @@ def test_smoke():
         Side.BUY,
         Decimal('134.79'),
         20,
-        Style.VANILLA
+        Style.LIMIT
     )
     assert len(fills) == 1
     assert fills == [

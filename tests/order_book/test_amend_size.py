@@ -18,13 +18,13 @@ def test_amend_size():
         Side.BUY,
         Decimal('10.5'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
     sell2, _, _ = order_book.add_limit_order(
         Side.SELL,
         Decimal('10.6'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert str(

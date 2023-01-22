@@ -14,13 +14,13 @@ def test_cancel_order():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
-    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10, Style.VANILLA)
-    order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10, Style.VANILLA)
+    order_book.add_limit_order(Side.BUY, Decimal('10.5'), 10, Style.LIMIT)
+    order_book.add_limit_order(Side.SELL, Decimal('10.6'), 10, Style.LIMIT)
     sell2, _, _ = order_book.add_limit_order(
         Side.SELL,
         Decimal('10.6'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert str(
