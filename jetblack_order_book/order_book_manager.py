@@ -58,7 +58,7 @@ class OrderBookManager(AbstractOrderBookManager):
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
-        return self.bids.side_depth(levels), self.offers.side_depth(levels)
+        return self.bids.depth(levels), self.offers.depth(levels)
 
     def add_limit_order(
             self,

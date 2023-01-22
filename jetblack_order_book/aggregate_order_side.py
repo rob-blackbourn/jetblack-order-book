@@ -22,19 +22,10 @@ class AggregateOrderSide:
         Args:
             side (Side): The side.
         """
-        self._side = side
+        self._low_is_best = side == Side.SELL
         self._orders: Deque[AggregateOrder] = deque()
 
-    @property
-    def side(self) -> Side:
-        """The side.
-
-        Returns:
-            Side: The side.
-        """
-        return self._side
-
-    def side_depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+    def depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
         """Return the orders for the side.
 
         Args:
@@ -46,26 +37,26 @@ class AggregateOrderSide:
         if levels is None:
             return self._orders
         levels = min(levels, len(self._orders))
-        if self._side == Side.BUY:
+        if self._low_is_best:
+            return tuple(islice(self._orders, 0, levels))
+        else:
             return tuple(islice(
                 self._orders,
                 len(self._orders) - levels,
                 len(self._orders)
             ))
-        else:
-            return tuple(islice(self._orders, 0, levels))
 
     @property
     def best(self) -> AggregateOrder:
         """Get the order at the best price level."""
-        return self._orders[-1] if self._side == Side.BUY else self._orders[0]
+        return self._orders[0] if self._low_is_best else self._orders[-1]
 
     def delete_best(self) -> None:
         """Delete the order at the best price level."""
-        if self._side == Side.BUY:
-            del self._orders[-1]
-        else:
+        if self._low_is_best:
             del self._orders[0]
+        else:
+            del self._orders[-1]
 
     def add_limit_order(self, order: LimitOrder) -> None:
         """Add a limit order.
