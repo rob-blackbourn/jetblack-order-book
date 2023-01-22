@@ -15,6 +15,7 @@ from ..abstract_types import (
     AbstractOrderBookManagerPlugin
 )
 from ..aggregate_order import AggregateOrder
+from ..aggregate_order_side import AggregateOrderSide
 from ..order import Order, Style
 
 
@@ -25,20 +26,25 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.FILL_OR_KILL,)
 
-    def pre_fill(self, aggressor: Order) -> List[Order]:
+    def pre_fill(
+            self,
+            bids: AggregateOrderSide,
+            offers: AggregateOrderSide,
+            aggressor: Order
+    ) -> List[Order]:
 
         cancels: List[Order] = []
 
         # Ensure time weighted.
         order = (
             self._handle_fill_or_kill(
-                self.manager.bids.best,
-                self.manager.offers.best
+                bids.best,
+                offers.best
             )
-            if self.manager.bids.best.first.order_id < self.manager.offers.best.first.order_id
+            if bids.best.first.order_id < offers.best.first.order_id
             else self._handle_fill_or_kill(
-                self.manager.offers.best,
-                self.manager.bids.best
+                offers.best,
+                bids.best
             )
         )
 
@@ -47,20 +53,22 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
 
         return cancels
 
+    @classmethod
     def _handle_fill_or_kill(
-            self,
+            cls,
             order1: AggregateOrder,
             order2: AggregateOrder,
     ) -> Optional[Order]:
-        if self._should_cancel(order1.first, order2.first):
+        if cls._should_cancel(order1.first, order2.first):
             return order1.first
 
-        if self._should_cancel(order2.first, order1.first):
+        if cls._should_cancel(order2.first, order1.first):
             return order2.first
 
         return None
 
-    def _should_cancel(self, order1: Order, order2: Order) -> bool:
+    @classmethod
+    def _should_cancel(cls, order1: Order, order2: Order) -> bool:
         # If this is a fill-or-kill order the order must be completely filled.
         return (
             order1.style == Style.FILL_OR_KILL and

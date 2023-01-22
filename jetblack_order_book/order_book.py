@@ -34,12 +34,20 @@ class OrderBook(AbstractOrderBook):
         self._manager = OrderBookManager(plugins)
 
     @property
-    def bids(self) -> AggregateOrderSide:
-        return self._manager.bids
+    def limit_bids(self) -> AggregateOrderSide:
+        return self._manager.limit_bids
 
     @property
-    def offers(self) -> AggregateOrderSide:
-        return self._manager.offers
+    def limit_offers(self) -> AggregateOrderSide:
+        return self._manager.limit_offers
+
+    @property
+    def stop_bids(self) -> AggregateOrderSide:
+        return self._manager.stop_bids
+
+    @property
+    def stop_offers(self) -> AggregateOrderSide:
+        return self._manager.stop_offers
 
     def book_depth(
             self,

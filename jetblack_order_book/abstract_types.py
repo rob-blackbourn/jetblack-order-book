@@ -17,12 +17,22 @@ class AbstractOrderBook(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def bids(self) -> AggregateOrderSide:
+    def limit_bids(self) -> AggregateOrderSide:
         """The bids"""
 
     @property
     @abstractmethod
-    def offers(self) -> AggregateOrderSide:
+    def limit_offers(self) -> AggregateOrderSide:
+        """The offers"""
+
+    @property
+    @abstractmethod
+    def stop_bids(self) -> AggregateOrderSide:
+        """The bids"""
+
+    @property
+    @abstractmethod
+    def stop_offers(self) -> AggregateOrderSide:
         """The offers"""
 
     @abstractmethod
@@ -93,17 +103,6 @@ class AbstractOrderBook(metaclass=ABCMeta):
 
 class AbstractOrderBookManager(AbstractOrderBook):
     """An order book manager"""
-
-    @abstractmethod
-    def side(self, side: Side) -> AggregateOrderSide:
-        """Return the side of the order book.
-
-        Args:
-            side (Side): The side required
-
-        Returns:
-            AggregateOrderSide: The aggregate order side.
-        """
 
     @abstractmethod
     def create(
@@ -211,13 +210,20 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
         return
 
-    def pre_fill(self, aggressor: Order) -> List[Order]:
+    def pre_fill(
+            self,
+            bids: AggregateOrderSide,
+            offers: AggregateOrderSide,
+            aggressor: Order
+    ) -> List[Order]:
         """A hook called before filling an order.
 
         If the hook returns orders, these orders will be cancelled and the fill
         will be aborted.
 
         Args:
+            bids (AggregateOrderSide): The bids to consider.
+            offers (AggregateOrderSide): The offers to consider.
             aggressor (Order): The order that initiated the matching.
 
         Returns:

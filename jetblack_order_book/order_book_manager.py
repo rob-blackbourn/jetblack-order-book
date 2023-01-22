@@ -35,30 +35,46 @@ class OrderBookManager(AbstractOrderBookManager):
             for style in plugin.valid_styles
         )
         self._supported_styles.add(Style.LIMIT)
+        self._supported_styles.add(Style.STOP)
 
         self._orders: Dict[int, Order] = {}
         self._next_order_id = 1
-        self._sides = {
+        self._limit_sides = {
             Side.BUY: AggregateOrderSide(False),
             Side.SELL: AggregateOrderSide(True)
         }
+        self._stop_sides = {
+            Side.BUY: AggregateOrderSide(True),
+            Side.SELL: AggregateOrderSide(False)
+        }
 
-    def side(self, side: Side) -> AggregateOrderSide:
-        return self._sides[side]
+    def _side(self, order: Order) -> AggregateOrderSide:
+        return (
+            self._limit_sides[order.side] if order.style != Style.STOP
+            else self._stop_sides[order.side]
+        )
 
     @property
-    def bids(self) -> AggregateOrderSide:
-        return self.side(Side.BUY)
+    def limit_bids(self) -> AggregateOrderSide:
+        return self._limit_sides[Side.BUY]
 
     @property
-    def offers(self) -> AggregateOrderSide:
-        return self.side(Side.SELL)
+    def limit_offers(self) -> AggregateOrderSide:
+        return self._limit_sides[Side.SELL]
+
+    @property
+    def stop_bids(self) -> AggregateOrderSide:
+        return self._stop_sides[Side.BUY]
+
+    @property
+    def stop_offers(self) -> AggregateOrderSide:
+        return self._stop_sides[Side.SELL]
 
     def book_depth(
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
-        return self.bids.depth(levels), self.offers.depth(levels)
+        return self.limit_bids.depth(levels), self.limit_offers.depth(levels)
 
     def add_order(
             self,
@@ -80,7 +96,7 @@ class OrderBookManager(AbstractOrderBookManager):
         if order is None:
             return None, [], []
 
-        self.side(order.side).add_order(order)
+        self._side(order).add_order(order)
 
         # Try to match the new order with the book. The id of the order that
         # instigated the changes is supplied. The match may generated fills and
@@ -95,11 +111,11 @@ class OrderBookManager(AbstractOrderBookManager):
             raise ValueError("size must be greater than 0")
 
         order = self.find(order_id)
-        self.side(order.side).amend_order(order, size)
+        self._side(order).amend_order(order, size)
 
     def cancel_order(self, order_id: int) -> None:
         order = self.find(order_id)
-        self.side(order.side).cancel_order(order)
+        self._side(order).cancel_order(order)
         self.delete(order)
 
     def create(
@@ -164,37 +180,39 @@ class OrderBookManager(AbstractOrderBookManager):
         """
         fills: List[Fill] = []
         while (
-                self.bids and
-                self.offers and
-                self.bids.best.price >= self.offers.best.price
+                self.limit_bids and
+                self.limit_offers and
+                self.limit_bids.best.price >= self.limit_offers.best.price
         ):
-            while self.bids.best and self.offers.best:
+            bids, offers = self._fillable_sides(aggressor)
+
+            while bids.best and offers.best:
 
                 # Check if any orders require cancellation.
-                cancel_orders = self._pre_fill(aggressor)
+                cancel_orders = self._pre_fill(bids, offers, aggressor)
                 if cancel_orders:
                     for order in cancel_orders:
                         cancels.append(order)
-                        self.side(order.side).cancel_order(order)
+                        self._side(order).cancel_order(order)
                     break
 
                 # The price is that of the newest order in case of a cross;
                 # where the newest order price exceeds (rather than matched)
                 # the best opposing price.
                 fill_size = min(
-                    self.bids.best.first.size,
-                    self.offers.best.first.size
+                    bids.best.first.size,
+                    offers.best.first.size
                 )
                 fill_price = (
-                    self.bids.best.first.price
-                    if self.bids.best.first.order_id == aggressor.order_id
-                    else self.offers.best.first.price
+                    bids.best.first.price
+                    if bids.best.first.order_id == aggressor.order_id
+                    else offers.best.first.price
                 )
 
                 fills.append(
                     Fill(
-                        self.bids.best.first.order_id,
-                        self.offers.best.first.order_id,
+                        bids.best.first.order_id,
+                        offers.best.first.order_id,
                         fill_price,
                         fill_size)
                 )
@@ -203,36 +221,60 @@ class OrderBookManager(AbstractOrderBookManager):
                 # orders have been completely executed; if they have, delete
                 # them.
 
-                self.bids.best.first.size -= fill_size
-                if self.bids.best.first.size == 0:
-                    self.delete(self.bids.best.first)
-                    self.bids.best.delete_first()
+                bids.best.first.size -= fill_size
+                if bids.best.first.size == 0:
+                    self.delete(bids.best.first)
+                    bids.best.delete_first()
 
-                self.offers.best.first.size -= fill_size
-                if self.offers.best.first.size == 0:
-                    self.delete(self.offers.best.first)
-                    self.offers.best.delete_first()
+                offers.best.first.size -= fill_size
+                if offers.best.first.size == 0:
+                    self.delete(offers.best.first)
+                    offers.best.delete_first()
 
             # Check if any orders require cancellation.
             cancel_orders = self._post_match()
             for order in cancel_orders:
                 cancels.append(order)
-                self.side(order.side).cancel_order(order)
+                self._side(order).cancel_order(order)
 
             # if all orders have been executed at this price level remove the
             # price level.
-            if self.bids and not self.bids.best:
-                self.bids.delete_best()
-            if self.offers and not self.offers.best:
-                self.offers.delete_best()
+            if self.limit_bids and not self.limit_bids.best:
+                self.limit_bids.delete_best()
+            if self.limit_offers and not self.limit_offers.best:
+                self.limit_offers.delete_best()
 
         return fills, cancels
 
-    def _pre_fill(self, aggressor: Order) -> List[Order]:
+    def _fillable_sides(self, aggressor: Order) -> Tuple[AggregateOrderSide, AggregateOrderSide]:
+        if (
+            aggressor.side == Side.SELL and
+            self.stop_bids and
+            self.stop_bids.best.price <= self.limit_bids.best.price and
+            self.stop_bids.best.first.order_id < self.limit_bids.best.first.order_id
+        ):
+            return self.stop_bids, self.limit_offers
+
+        if (
+            aggressor.side == Side.BUY and
+            self.stop_offers and
+            self.stop_offers.best.price <= self.limit_offers.best.price and
+            self.stop_offers.best.first.order_id < self.limit_offers.best.first.order_id
+        ):
+            return self.limit_bids, self.stop_offers
+
+        return self.limit_bids, self.limit_offers
+
+    def _pre_fill(
+            self,
+            bids: AggregateOrderSide,
+            offers: AggregateOrderSide,
+            aggressor: Order
+    ) -> List[Order]:
         cancels: List[Order] = []
 
         for plugin in self._plugins:
-            cancels += plugin.pre_fill(aggressor)
+            cancels += plugin.pre_fill(bids, offers, aggressor)
 
         return cancels
 
@@ -247,12 +289,12 @@ class OrderBookManager(AbstractOrderBookManager):
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, OrderBookManager) and
-            self.bids == other.bids and
-            self.offers == other.offers
+            self.limit_bids == other.limit_bids and
+            self.limit_offers == other.limit_offers
         )
 
     def __repr__(self) -> str:
-        return f"OrderBook({self.bids}, {self.offers})"
+        return f"OrderBook({self.limit_bids}, {self.limit_offers})"
 
     def __str__(self) -> str:
         return format(self, "")
