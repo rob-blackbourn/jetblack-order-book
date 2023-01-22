@@ -5,7 +5,7 @@ from itertools import islice
 from typing import Deque, Sequence, Optional
 
 from .aggregate_order import AggregateOrder
-from .order import Order, Side
+from .order import Order
 from .utils import index_of
 
 
@@ -16,13 +16,13 @@ class AggregateOrderSide:
     "best"; higher for bids, lower for offers.
     """
 
-    def __init__(self, side: Side) -> None:
+    def __init__(self, low_is_best: bool) -> None:
         """Initialise an aggregate order side.
 
         Args:
             side (Side): The side.
         """
-        self._low_is_best = side == Side.SELL
+        self._low_is_best = low_is_best
         self._orders: Deque[AggregateOrder] = deque()
 
     def depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:

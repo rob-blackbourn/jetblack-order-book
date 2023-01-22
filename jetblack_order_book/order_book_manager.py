@@ -39,8 +39,8 @@ class OrderBookManager(AbstractOrderBookManager):
         self._orders: Dict[int, Order] = {}
         self._next_order_id = 1
         self._sides = {
-            Side.BUY: AggregateOrderSide(Side.BUY),
-            Side.SELL: AggregateOrderSide(Side.SELL)
+            Side.BUY: AggregateOrderSide(False),
+            Side.SELL: AggregateOrderSide(True)
         }
 
     def side(self, side: Side) -> AggregateOrderSide:
