@@ -17,23 +17,23 @@ class AbstractOrderBook(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def limit_bids(self) -> AggregateOrderSide:
+    def bids(self) -> AggregateOrderSide:
         """The bids"""
 
     @property
     @abstractmethod
-    def limit_offers(self) -> AggregateOrderSide:
+    def offers(self) -> AggregateOrderSide:
         """The offers"""
 
     @property
     @abstractmethod
     def stop_bids(self) -> AggregateOrderSide:
-        """The bids"""
+        """The stop bids"""
 
     @property
     @abstractmethod
     def stop_offers(self) -> AggregateOrderSide:
-        """The offers"""
+        """The stop offers"""
 
     @abstractmethod
     def book_depth(

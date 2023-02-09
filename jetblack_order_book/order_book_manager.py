@@ -55,11 +55,11 @@ class OrderBookManager(AbstractOrderBookManager):
         )
 
     @property
-    def limit_bids(self) -> AggregateOrderSide:
+    def bids(self) -> AggregateOrderSide:
         return self._limit_sides[Side.BUY]
 
     @property
-    def limit_offers(self) -> AggregateOrderSide:
+    def offers(self) -> AggregateOrderSide:
         return self._limit_sides[Side.SELL]
 
     @property
@@ -74,7 +74,7 @@ class OrderBookManager(AbstractOrderBookManager):
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
-        return self.limit_bids.depth(levels), self.limit_offers.depth(levels)
+        return self.bids.depth(levels), self.offers.depth(levels)
 
     def add_order(
             self,
@@ -179,11 +179,7 @@ class OrderBookManager(AbstractOrderBookManager):
             Tuple[List[Order], List[Order]: The fills and cancels.
         """
         fills: List[Fill] = []
-        while (
-                self.limit_bids and
-                self.limit_offers and
-                self.limit_bids.best.price >= self.limit_offers.best.price
-        ):
+        while self._can_match():
             bids, offers = self._fillable_sides(aggressor)
 
             while bids.best and offers.best:
@@ -208,12 +204,31 @@ class OrderBookManager(AbstractOrderBookManager):
 
             # if all orders have been executed at this price level remove the
             # price level.
-            if self.limit_bids and not self.limit_bids.best:
-                self.limit_bids.delete_best()
-            if self.limit_offers and not self.limit_offers.best:
-                self.limit_offers.delete_best()
+            if self.bids and not self.bids.best:
+                self.bids.delete_best()
+            if self.offers and not self.offers.best:
+                self.offers.delete_best()
 
         return fills, cancels
+
+    def _can_match(self) -> bool:
+        if (
+                self.bids and
+                self.offers and
+                self.bids.best.price >= self.offers.best.price
+        ):
+            return True
+
+        # Sell stop
+        # The buy price drops to at or below the sell stop
+        if (
+            self.bids and
+            self.stop_offers and
+            self.bids.best.price <= self.stop_offers.best.price
+        ):
+            return True
+
+        return False
 
     def _fill_best(
             self,
@@ -261,20 +276,20 @@ class OrderBookManager(AbstractOrderBookManager):
         if (
             aggressor.side == Side.SELL and
             self.stop_bids and
-            self.stop_bids.best.price <= self.limit_bids.best.price and
-            self.stop_bids.best.first.order_id < self.limit_bids.best.first.order_id
+            self.stop_bids.best.price <= self.bids.best.price and
+            self.stop_bids.best.first.order_id < self.bids.best.first.order_id
         ):
-            return self.stop_bids, self.limit_offers
+            return self.stop_bids, self.offers
 
         if (
             aggressor.side == Side.BUY and
             self.stop_offers and
-            self.stop_offers.best.price <= self.limit_offers.best.price and
-            self.stop_offers.best.first.order_id < self.limit_offers.best.first.order_id
+            self.stop_offers.best.price <= self.offers.best.price and
+            self.stop_offers.best.first.order_id < self.offers.best.first.order_id
         ):
-            return self.limit_bids, self.stop_offers
+            return self.bids, self.stop_offers
 
-        return self.limit_bids, self.limit_offers
+        return self.bids, self.offers
 
     def _pre_fill(
             self,
@@ -300,12 +315,12 @@ class OrderBookManager(AbstractOrderBookManager):
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, OrderBookManager) and
-            self.limit_bids == other.limit_bids and
-            self.limit_offers == other.limit_offers
+            self.bids == other.bids and
+            self.offers == other.offers
         )
 
     def __repr__(self) -> str:
-        return f"OrderBook({self.limit_bids}, {self.limit_offers})"
+        return f"OrderBook({self.bids}, {self.offers})"
 
     def __str__(self) -> str:
         return format(self, "")
