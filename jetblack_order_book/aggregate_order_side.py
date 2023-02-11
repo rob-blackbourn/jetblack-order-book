@@ -5,7 +5,7 @@ from itertools import islice
 from typing import Deque, Sequence, Optional
 
 from .aggregate_order import AggregateOrder
-from .limit_order import LimitOrder, Side
+from .order import Order
 from .utils import index_of
 
 
@@ -16,25 +16,16 @@ class AggregateOrderSide:
     "best"; higher for bids, lower for offers.
     """
 
-    def __init__(self, side: Side) -> None:
+    def __init__(self, low_is_best: bool) -> None:
         """Initialise an aggregate order side.
 
         Args:
             side (Side): The side.
         """
-        self._side = side
+        self._low_is_best = low_is_best
         self._orders: Deque[AggregateOrder] = deque()
 
-    @property
-    def side(self) -> Side:
-        """The side.
-
-        Returns:
-            Side: The side.
-        """
-        return self._side
-
-    def side_depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
+    def depth(self, levels: Optional[int]) -> Sequence[AggregateOrder]:
         """Return the orders for the side.
 
         Args:
@@ -46,32 +37,32 @@ class AggregateOrderSide:
         if levels is None:
             return self._orders
         levels = min(levels, len(self._orders))
-        if self._side == Side.BUY:
+        if self._low_is_best:
+            return tuple(islice(self._orders, 0, levels))
+        else:
             return tuple(islice(
                 self._orders,
                 len(self._orders) - levels,
                 len(self._orders)
             ))
-        else:
-            return tuple(islice(self._orders, 0, levels))
 
     @property
     def best(self) -> AggregateOrder:
         """Get the order at the best price level."""
-        return self._orders[-1] if self._side == Side.BUY else self._orders[0]
+        return self._orders[0] if self._low_is_best else self._orders[-1]
 
     def delete_best(self) -> None:
         """Delete the order at the best price level."""
-        if self._side == Side.BUY:
-            del self._orders[-1]
-        else:
+        if self._low_is_best:
             del self._orders[0]
+        else:
+            del self._orders[-1]
 
-    def add_limit_order(self, order: LimitOrder) -> None:
-        """Add a limit order.
+    def add_order(self, order: Order) -> None:
+        """Add an order.
 
         Args:
-            order (LimitOrder): The order.
+            order (Order): The order.
         """
         # Find where the order should go.
         index = index_of(
@@ -89,11 +80,11 @@ class AggregateOrderSide:
             # Insert a new lowest price level
             self._orders.insert(index, AggregateOrder(order))
 
-    def amend_limit_order(self, order: LimitOrder, size: int) -> None:
-        """Amend a limit order.
+    def amend_order(self, order: Order, size: int) -> None:
+        """Amend an order.
 
         Args:
-            order (LimitOrder): The order.
+            order (Order): The order.
             size (int): The new size.
 
         Raises:
@@ -110,11 +101,11 @@ class AggregateOrderSide:
         # Change the size.
         self._orders[index].change_size(order.order_id, size)
 
-    def cancel_limit_order(self, order: LimitOrder) -> None:
-        """Cancel a limit order.
+    def cancel_order(self, order: Order) -> None:
+        """Cancel an order.
 
         Args:
-            order (LimitOrder): The order
+            order (Order): The order
 
         Raises:
             KeyError: If the order is not in this side.
@@ -142,3 +133,18 @@ class AggregateOrderSide:
     def __bool__(self) -> bool:
         """A side is True if it has orders; otherwise False."""
         return bool(self._orders)
+
+    def __repr__(self) -> str:
+        return f"OrderBook({self._low_is_best}) {{{str(self)}}}"
+
+    def __str__(self) -> str:
+        return format(self, "")
+
+    def __format__(self, format_spec: str) -> str:
+        levels = None if not format_spec else int(format_spec)
+        if not (levels is None or levels > 0):
+            raise ValueError('levels should be > 0')
+
+        orders = self.depth(levels)
+
+        return ",".join(map(str, orders))

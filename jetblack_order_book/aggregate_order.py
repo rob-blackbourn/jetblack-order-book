@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections import deque
 from decimal import Decimal
-from typing import List
+from typing import Callable, List
 
 from .utils import index_of
-from .limit_order import LimitOrder, Style
+from .order import Order
 
 
 class AggregateOrder:
@@ -20,11 +20,11 @@ class AggregateOrder:
     executed first.
     """
 
-    def __init__(self, order: LimitOrder) -> None:
-        """Initialise an aggregate order with the first limit order.
+    def __init__(self, order: Order) -> None:
+        """Initialise an aggregate order with the first order.
 
         Args:
-            order (LimitOrder): The limit order with which to start the
+            order (Order): The order with which to start the
                 aggregate order.
         """
         self._price = order.price
@@ -45,16 +45,16 @@ class AggregateOrder:
         return sum(order.size for order in self._orders)
 
     @property
-    def first(self) -> LimitOrder:
+    def first(self) -> Order:
         """The first order to process."""
         return self._orders[0]
 
     @property
-    def orders(self) -> List[LimitOrder]:
+    def orders(self) -> List[Order]:
         """The orders as a list.
 
         Returns:
-            List[LimitOrder]: A list of the orders.
+            List[Order]: A list of the orders.
         """
         return list(self._orders)
 
@@ -62,11 +62,11 @@ class AggregateOrder:
         """Delete the first order"""
         del self._orders[0]
 
-    def append(self, order: LimitOrder) -> None:
+    def append(self, order: Order) -> None:
         """Add a new order at the price level of this aggregate order.
 
         Args:
-            order (LimitOrder): The new order.
+            order (Order): The new order.
         """
         assert order.price == self.price, "aggregate orders must be the same price"
         self._orders.append(order)
@@ -113,19 +113,19 @@ class AggregateOrder:
 
         del self._orders[index]
 
-    def find_by_style(self, style: Style) -> List[LimitOrder]:
-        """Find orders by style.
+    def find_all(self, predicate: Callable[[Order], bool]) -> List[Order]:
+        """Find orders which match a predicate.
 
         Args:
-            style (Style): The style.
+            predicate (Callable[[Order], bool]): The predicate.
 
         Returns:
-            List[LimitOrder]: The orders for the style.
+            List[Order]: Orders which match the predicate.
         """
         return [
             order
             for order in self._orders
-            if order.style == style
+            if predicate(order)
         ]
 
     def __eq__(self, other: object) -> bool:

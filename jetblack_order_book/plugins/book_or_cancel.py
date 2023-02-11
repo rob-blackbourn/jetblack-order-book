@@ -15,7 +15,8 @@ from ..abstract_types import (
     AbstractOrderBookManager,
     AbstractOrderBookManagerPlugin
 )
-from ..limit_order import LimitOrder, Style
+from ..aggregate_order_side import AggregateOrderSide
+from ..order import Order, Style
 
 
 class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
@@ -25,20 +26,25 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
     def valid_styles(self) -> Sequence[Style]:
         return (Style.BOOK_OR_CANCEL,)
 
-    def pre_fill(self, aggressor: LimitOrder) -> List[LimitOrder]:
+    def pre_fill(
+            self,
+            bids: AggregateOrderSide,
+            offers: AggregateOrderSide,
+            aggressor: Order
+    ) -> List[Order]:
 
-        cancels: List[LimitOrder] = []
+        cancels: List[Order] = []
 
         if (
-                self.manager.bids.best.first.style == Style.BOOK_OR_CANCEL and
-                aggressor.order_id == self.manager.bids.best.first.order_id
+                bids.best.first.style == Style.BOOK_OR_CANCEL and
+                aggressor.order_id == bids.best.first.order_id
         ):
-            cancels.append(self.manager.bids.best.first)
+            cancels.append(bids.best.first)
         elif (
-                self.manager.offers.best.first.style == Style.BOOK_OR_CANCEL and
-                aggressor.order_id == self.manager.offers.best.first.order_id
+                offers.best.first.style == Style.BOOK_OR_CANCEL and
+                aggressor.order_id == offers.best.first.order_id
         ):
-            cancels.append(self.manager.offers.best.first)
+            cancels.append(offers.best.first)
 
         return cancels
 

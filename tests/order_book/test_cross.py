@@ -15,23 +15,23 @@ def test_cross():
 
     assert str(order_book) == ' : ', "the order book should be empty"
 
-    buy1, _, _ = order_book.add_limit_order(
+    buy1, _, _ = order_book.add_order(
         Side.BUY,
         Decimal('10.5'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
-    buy2, _, _ = order_book.add_limit_order(
+    buy2, _, _ = order_book.add_order(
         Side.BUY,
         Decimal('11.0'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
-    sell1, fills, _ = order_book.add_limit_order(
+    sell1, fills, _ = order_book.add_order(
         Side.SELL,
         Decimal('10.0'),
         15,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy1 is not None and sell1 is not None and buy2 is not None and fills == [

@@ -14,24 +14,24 @@ def test_time_priority():
     assert str(order_book) == ' : ', "the order book should be empty"
 
     # Add two buy orders at the same price
-    buy1, _, _ = order_book.add_limit_order(
+    buy1, _, _ = order_book.add_order(
         Side.BUY,
         Decimal('10.5'),
         10,
-        Style.VANILLA
+        Style.LIMIT
     )
-    buy2, _, _ = order_book.add_limit_order(
+    buy2, _, _ = order_book.add_order(
         Side.BUY, Decimal('10.5'),
         5,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     # Add a sell for the same price with a greater total size
-    sell, fills, _ = order_book.add_limit_order(
+    sell, fills, _ = order_book.add_order(
         Side.SELL,
         Decimal('10.5'),
         20,
-        Style.VANILLA
+        Style.LIMIT
     )
 
     assert buy1 is not None and sell is not None and buy2 is not None and fills == [
