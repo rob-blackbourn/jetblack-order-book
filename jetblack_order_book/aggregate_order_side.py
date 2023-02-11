@@ -133,3 +133,18 @@ class AggregateOrderSide:
     def __bool__(self) -> bool:
         """A side is True if it has orders; otherwise False."""
         return bool(self._orders)
+
+    def __repr__(self) -> str:
+        return f"OrderBook({self._low_is_best}) {{{str(self)}}}"
+
+    def __str__(self) -> str:
+        return format(self, "")
+
+    def __format__(self, format_spec: str) -> str:
+        levels = None if not format_spec else int(format_spec)
+        if not (levels is None or levels > 0):
+            raise ValueError('levels should be > 0')
+
+        orders = self.depth(levels)
+
+        return ",".join(map(str, orders))

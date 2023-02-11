@@ -208,6 +208,10 @@ class OrderBookManager(AbstractOrderBookManager):
                 self.bids.delete_best()
             if self.offers and not self.offers.best:
                 self.offers.delete_best()
+            if self.stop_bids and not self.stop_bids.best:
+                self.stop_bids.delete_best()
+            if self.stop_offers and not self.stop_offers.best:
+                self.stop_offers.delete_best()
 
         return fills, cancels
 
@@ -225,6 +229,15 @@ class OrderBookManager(AbstractOrderBookManager):
             self.bids and
             self.stop_offers and
             self.bids.best.price <= self.stop_offers.best.price
+        ):
+            return True
+
+        # Buy stop
+        # The sell price rises to at or above the buy stop
+        if (
+            self.stop_bids and
+            self.offers and
+            self.stop_bids.best.price <= self.offers.best.price
         ):
             return True
 
@@ -276,16 +289,18 @@ class OrderBookManager(AbstractOrderBookManager):
         if (
             aggressor.side == Side.SELL and
             self.stop_bids and
-            self.stop_bids.best.price <= self.bids.best.price and
-            self.stop_bids.best.first.order_id < self.bids.best.first.order_id
+            self.offers and
+            self.stop_bids.best.price >= self.offers.best.price and
+            self.stop_bids.best.first.order_id < self.offers.best.first.order_id
         ):
             return self.stop_bids, self.offers
 
         if (
             aggressor.side == Side.BUY and
+            self.bids and
             self.stop_offers and
-            self.stop_offers.best.price <= self.offers.best.price and
-            self.stop_offers.best.first.order_id < self.offers.best.first.order_id
+            self.bids.best.price >= self.stop_offers.best.price and
+            self.bids.best.first.order_id > self.stop_offers.best.first.order_id
         ):
             return self.bids, self.stop_offers
 
