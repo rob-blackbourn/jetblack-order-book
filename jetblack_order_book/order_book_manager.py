@@ -11,6 +11,7 @@ from .abstract_types import (
 )
 from .aggregate_order import AggregateOrder
 from .aggregate_order_side import AggregateOrderSide
+from .constants import ALL_PLUGINS
 from .fill import Fill
 from .order import Order, Side, Style
 
@@ -18,7 +19,10 @@ from .order import Order, Side, Style
 class OrderBookManager(AbstractOrderBookManager):
     """An order book manager"""
 
-    def __init__(self, plugin_factories: Sequence[PluginFactory]) -> None:
+    def __init__(
+            self,
+            plugin_factories: Sequence[PluginFactory] = ALL_PLUGINS
+    ) -> None:
         """Initialise the order book manager.
 
         Args:
