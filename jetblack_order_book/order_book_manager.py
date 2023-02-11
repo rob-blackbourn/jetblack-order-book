@@ -179,7 +179,7 @@ class OrderBookManager(AbstractOrderBookManager):
             Tuple[List[Order], List[Order]: The fills and cancels.
         """
         fills: List[Fill] = []
-        while self._can_match():
+        while self._can_match:
             bids, offers = self._fillable_sides(aggressor)
 
             while bids.best and offers.best:
@@ -215,6 +215,7 @@ class OrderBookManager(AbstractOrderBookManager):
 
         return fills, cancels
 
+    @property
     def _can_match(self) -> bool:
         if (
                 self.bids and
