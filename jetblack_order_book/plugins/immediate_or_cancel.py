@@ -21,24 +21,29 @@ from typing import Dict, List, Sequence
 
 from ..abstract_types import (
     AbstractOrderBookManager,
-    AbstractOrderBookManagerPlugin
+    Plugin
 )
 from ..aggregate_order import AggregateOrder
 from ..order import Order, Side, Style
 
 
-class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
+class ImmediateOrCancelPlugin(Plugin):
     """A plugin which handles fill mor kill orders"""
 
     @property
     def valid_styles(self) -> Sequence[Style]:
         return (Style.IMMEDIATE_OR_CANCEL,)
 
-    def __init__(self, manager: AbstractOrderBookManager) -> None:
-        super().__init__(manager)
+    def __init__(self) -> None:
         self._immediate_or_cancel: Dict[Side, AggregateOrder] = {}
 
-    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
+    def pre_create(
+            self,
+            manager: AbstractOrderBookManager,
+            side: Side,
+            price: Decimal,
+            style: Style
+    ) -> bool:
         if style != Style.IMMEDIATE_OR_CANCEL:
             return True
 
@@ -61,7 +66,11 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         # The order should be rejected.
         return False
 
-    def post_create(self, order: Order) -> List[Order]:
+    def post_create(
+            self,
+            manager: AbstractOrderBookManager,
+            order: Order
+    ) -> List[Order]:
         # If this order is at a better price level than existing immediate or
         # cancel orders, they should be cancelled.
 
@@ -88,7 +97,11 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
         return cancels
 
-    def post_delete(self, order: Order) -> None:
+    def post_delete(
+            self,
+            manager: AbstractOrderBookManager,
+            order: Order
+    ) -> None:
         # Remove the order from the local cache.
         if (
                 order.side in self._immediate_or_cancel and
@@ -96,36 +109,25 @@ class ImmediateOrCancelPlugin(AbstractOrderBookManagerPlugin):
         ):
             self._immediate_or_cancel[order.side].cancel(order.order_id)
 
-    def post_match(self) -> List[Order]:
+    def post_match(
+            self,
+            manager: AbstractOrderBookManager,
+    ) -> List[Order]:
         # After a match any immediate-or-cancel orders at the best price level
         # must be cancelled.
 
         cancels: List[Order] = []
 
-        if self.manager.bids:
-            orders = self.manager.bids.best.find_all(
+        if manager.bids:
+            orders = manager.bids.best.find_all(
                 lambda x: x.style == Style.IMMEDIATE_OR_CANCEL
             )
             cancels += orders
 
-        if self.manager.offers:
-            orders = self.manager.offers.best.find_all(
+        if manager.offers:
+            orders = manager.offers.best.find_all(
                 lambda x: x.style == Style.IMMEDIATE_OR_CANCEL
             )
             cancels += orders
 
         return cancels
-
-
-def create_immediate_or_cancel_plugin(
-        manager: AbstractOrderBookManager
-) -> AbstractOrderBookManagerPlugin:
-    """Create a plugin for `Style.IMMEDIATE_OR_CANCEL` orders.
-
-    Args:
-        manager (AbstractOrderBookManager): The order book manager.
-
-    Returns:
-        AbstractOrderBookManagerPlugin: A plugin for immediate-or-cancel orders.
-    """
-    return ImmediateOrCancelPlugin(manager)

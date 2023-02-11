@@ -152,11 +152,8 @@ class AbstractOrderBookManager(AbstractOrderBook):
         """
 
 
-class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
+class Plugin(metaclass=ABCMeta):
     """An abstract plugin for order book managers"""
-
-    def __init__(self, manager: AbstractOrderBookManager) -> None:
-        self.manager = manager
 
     @property
     @abstractmethod
@@ -168,7 +165,13 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
 
     # pylint: disable=unused-argument
-    def pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
+    def pre_create(
+            self,
+            manager: AbstractOrderBookManager,
+            side: Side,
+            price: Decimal,
+            style: Style
+    ) -> bool:
         """A hook called before order creation.
 
         If the method returns False creation is abandoned. For example if an
@@ -176,6 +179,7 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         be immediately rejected.
 
         Args:
+            manager (AbstractOrderBookManager): The manager.
             side (Side): The side.
             price (Decimal): The price.
             style (Style): The style.
@@ -185,13 +189,18 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
         return True
 
-    def post_create(self, order: Order) -> List[Order]:
+    def post_create(
+            self,
+            manager: AbstractOrderBookManager,
+            order: Order
+    ) -> List[Order]:
         """A hook called after create.
 
         If the hook returns orders, these orders will be cancelled, and creation
         will continue.
 
         Args:
+            manager (AbstractOrderBookManager): The manager.
             order (Order): The new order.
 
         Returns:
@@ -199,19 +208,25 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
         return []
 
-    def post_delete(self, order: Order) -> None:
+    def post_delete(
+            self,
+            manager: AbstractOrderBookManager,
+            order: Order
+    ) -> None:
         """A hook called after delete.
 
         This hook can be used to clean up any locally cached data regarding the
         deleted order.
 
         Args:
+            manager (AbstractOrderBookManager): The manager.
             order (Order): The order to delete.
         """
         return
 
     def pre_fill(
             self,
+            manager: AbstractOrderBookManager,
             bids: AggregateOrderSide,
             offers: AggregateOrderSide,
             aggressor: Order
@@ -222,6 +237,7 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         will be aborted.
 
         Args:
+            manager (AbstractOrderBookManager): The manager.
             bids (AggregateOrderSide): The bids to consider.
             offers (AggregateOrderSide): The offers to consider.
             aggressor (Order): The order that initiated the matching.
@@ -231,12 +247,15 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         """
         return []
 
-    def post_match(self) -> List[Order]:
+    def post_match(self, manager: AbstractOrderBookManager) -> List[Order]:
         """A hook called after a match.
 
         If this hook returns orders, these orders will be cancelled. This can
         be used to clean up orders which are no longer valid. For example any
         immediate-or-cancel orders that were not matched should be cancelled.
+
+        Args:
+            manager (AbstractOrderBookManager): The manager.
 
         Returns:
             List[Order]: A list of cancellable orders.
@@ -244,7 +263,4 @@ class AbstractOrderBookManagerPlugin(metaclass=ABCMeta):
         return []
 
 
-PluginFactory = Callable[
-    [AbstractOrderBookManager],
-    AbstractOrderBookManagerPlugin
-]
+PluginFactory = Callable[[], Plugin]

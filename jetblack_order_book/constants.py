@@ -1,13 +1,17 @@
 """Constants"""
 
+from typing import Sequence
+
 from .plugins import (
-    create_book_or_cancel_plugin,
-    create_fill_or_kill_plugin,
-    create_immediate_or_cancel_plugin
+    BookOrCancelPlugin,
+    FillOrKillPlugin,
+    ImmediateOrCancelPlugin
 )
 
-ALL_PLUGINS = (
-    create_book_or_cancel_plugin,
-    create_fill_or_kill_plugin,
-    create_immediate_or_cancel_plugin
+from .abstract_types import PluginFactory
+
+ALL_PLUGINS: Sequence[PluginFactory] = (
+    BookOrCancelPlugin,
+    FillOrKillPlugin,
+    ImmediateOrCancelPlugin
 )

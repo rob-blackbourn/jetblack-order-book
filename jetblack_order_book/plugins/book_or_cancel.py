@@ -13,13 +13,13 @@ from typing import List, Sequence
 
 from ..abstract_types import (
     AbstractOrderBookManager,
-    AbstractOrderBookManagerPlugin
+    Plugin
 )
 from ..aggregate_order_side import AggregateOrderSide
 from ..order import Order, Style
 
 
-class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
+class BookOrCancelPlugin(Plugin):
     """A plugin which handles fill mor kill orders"""
 
     @property
@@ -28,6 +28,7 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
 
     def pre_fill(
             self,
+            manager: AbstractOrderBookManager,
             bids: AggregateOrderSide,
             offers: AggregateOrderSide,
             aggressor: Order
@@ -47,17 +48,3 @@ class BookOrCancelPlugin(AbstractOrderBookManagerPlugin):
             cancels.append(offers.best.first)
 
         return cancels
-
-
-def create_book_or_cancel_plugin(
-        manager: AbstractOrderBookManager
-) -> AbstractOrderBookManagerPlugin:
-    """Create a plugin for `Style.BOOK_OR_CANCEL` orders.
-
-    Args:
-        manager (AbstractOrderBookManager): The order book manager.
-
-    Returns:
-        AbstractOrderBookManagerPlugin: The book-or-cancel plugin.
-    """
-    return BookOrCancelPlugin(manager)

@@ -12,14 +12,14 @@ from typing import List, Optional, Sequence
 
 from ..abstract_types import (
     AbstractOrderBookManager,
-    AbstractOrderBookManagerPlugin
+    Plugin
 )
 from ..aggregate_order import AggregateOrder
 from ..aggregate_order_side import AggregateOrderSide
 from ..order import Order, Style
 
 
-class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
+class FillOrKillPlugin(Plugin):
     """A plugin which handles fill mor kill orders"""
 
     @property
@@ -28,6 +28,7 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
 
     def pre_fill(
             self,
+            manager: AbstractOrderBookManager,
             bids: AggregateOrderSide,
             offers: AggregateOrderSide,
             aggressor: Order
@@ -74,17 +75,3 @@ class FillOrKillPlugin(AbstractOrderBookManagerPlugin):
             order1.style == Style.FILL_OR_KILL and
             order1.size > order2.size
         )
-
-
-def create_fill_or_kill_plugin(
-        manager: AbstractOrderBookManager
-) -> AbstractOrderBookManagerPlugin:
-    """Create a plugin for `Style.FILL_OR_KILL` orders.
-
-    Args:
-        manager (AbstractOrderBookManager): The order book manager.
-
-    Returns:
-        AbstractOrderBookManagerPlugin: The fill-or-kill plugin.
-    """
-    return FillOrKillPlugin(manager)

@@ -18,7 +18,7 @@ from .order import Order, Side, Style
 class OrderBookManager(AbstractOrderBookManager):
     """An order book manager"""
 
-    def __init__(self, plugins: Sequence[PluginFactory]) -> None:
+    def __init__(self, plugin_factories: Sequence[PluginFactory]) -> None:
         """Initialise the order book manager.
 
         Args:
@@ -26,7 +26,7 @@ class OrderBookManager(AbstractOrderBookManager):
                 styles.
         """
         self._plugins = [
-            plugin(self) for plugin in plugins
+            factory() for factory in plugin_factories
         ]
 
         self._supported_styles = set(
@@ -140,7 +140,7 @@ class OrderBookManager(AbstractOrderBookManager):
 
     def _pre_create(self, side: Side, price: Decimal, style: Style) -> bool:
         for plugin in self._plugins:
-            if not plugin.pre_create(side, price, style):
+            if not plugin.pre_create(self, side, price, style):
                 return False
 
         return True
@@ -149,7 +149,7 @@ class OrderBookManager(AbstractOrderBookManager):
         cancels: List[Order] = []
 
         for plugin in self._plugins:
-            cancels += plugin.post_create(order)
+            cancels += plugin.post_create(self, order)
 
         return cancels
 
@@ -162,7 +162,7 @@ class OrderBookManager(AbstractOrderBookManager):
 
     def _post_delete(self, order: Order) -> None:
         for plugin in self._plugins:
-            plugin.post_delete(order)
+            plugin.post_delete(self, order)
 
     def _match(
             self,
@@ -316,7 +316,7 @@ class OrderBookManager(AbstractOrderBookManager):
         cancels: List[Order] = []
 
         for plugin in self._plugins:
-            cancels += plugin.pre_fill(bids, offers, aggressor)
+            cancels += plugin.pre_fill(self, bids, offers, aggressor)
 
         return cancels
 
@@ -324,7 +324,7 @@ class OrderBookManager(AbstractOrderBookManager):
         cancels: List[Order] = []
 
         for plugin in self._plugins:
-            cancels += plugin.post_match()
+            cancels += plugin.post_match(self)
 
         return cancels
 
