@@ -70,7 +70,7 @@ class OrderBookManager(AbstractOrderBookManager):
     def stop_offers(self) -> AggregateOrderSide:
         return self._stop_sides[Side.SELL]
 
-    def book_depth(
+    def depth(
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
@@ -346,6 +346,6 @@ class OrderBookManager(AbstractOrderBookManager):
         if not (levels is None or levels > 0):
             raise ValueError('levels should be > 0')
 
-        bids, offers = self.book_depth(levels)
+        bids, offers = self.depth(levels)
 
         return f'{",".join(map(str, bids))} : {",".join(map(str, offers))}'

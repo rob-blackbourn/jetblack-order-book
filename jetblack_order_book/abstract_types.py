@@ -36,7 +36,7 @@ class AbstractOrderBook(metaclass=ABCMeta):
         """The stop offers"""
 
     @abstractmethod
-    def book_depth(
+    def depth(
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:

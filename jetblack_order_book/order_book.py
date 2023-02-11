@@ -49,11 +49,11 @@ class OrderBook(AbstractOrderBook):
     def stop_offers(self) -> AggregateOrderSide:
         return self._manager.stop_offers
 
-    def book_depth(
+    def depth(
             self,
             levels: Optional[int]
     ) -> Tuple[Sequence[AggregateOrder], Sequence[AggregateOrder]]:
-        return self._manager.book_depth(levels)
+        return self._manager.depth(levels)
 
     def add_order(
             self,
