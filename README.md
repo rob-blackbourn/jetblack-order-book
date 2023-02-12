@@ -10,7 +10,8 @@ orders, where the prices are the same.
 
 The orders support the following styles:
 
-  * `VANILLA` - a vanilla limit order,
+  * `LIMIT` - a simple limit order,
+  * `STOP` - a stop order.
   * `KILL_OR_FILL` - a limit order that should either be completely filled, or
     cancelled,
   * `IMMEDIATE_OR_CANCEL` - a limit order which must be either partially filled
@@ -20,7 +21,7 @@ The orders support the following styles:
 
 ## Implementation
 
-At the base layer there is a `LimitOrder` which holds the `order_id`, `side`,
+At the base layer there is an `Order` which holds the `order_id`, `side`,
 `price` and `size` of an order.
 
 As multiple orders can be placed at the same price, each price holds an
